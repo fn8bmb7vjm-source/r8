@@ -512,6 +512,12 @@ async function handleSession(session) {
   showLoad('Carregando perfil...');
   console.log('[R8] Carregando profile para:', session.user.id);
 
+  // Garante que o cliente usa o token do usuário autenticado
+  await sb.auth.setSession({
+    access_token: session.access_token,
+    refresh_token: session.refresh_token
+  });
+
   let profile = null;
 
   try {
@@ -521,14 +527,14 @@ async function handleSession(session) {
       .eq('id', session.user.id)
       .single();
 
-    console.log('[R8] Profile:', data, '| Error:', error);
+    console.log('[R8] Profile data:', data, '| Error:', error);
 
     if (!error && data) {
       profile = data;
     } else {
-      // Cria perfil se não existe
+      console.warn('[R8] Profile não encontrado, criando...');
       const meta = session.user.user_metadata || {};
-      const { data: created } = await sb
+      const { data: created, error: upsertErr } = await sb
         .from('profiles')
         .upsert({
           id: session.user.id,
@@ -541,6 +547,7 @@ async function handleSession(session) {
         })
         .select()
         .single();
+      console.log('[R8] Upsert result:', created, upsertErr);
       if (created) profile = created;
     }
   } catch(e) {
