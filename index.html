@@ -6,9 +6,12 @@
 <title>R8-Concursos · Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css"/>
+<!-- Firebase compat SDK (works without type=module) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <style>
 :root{--navy:#1a2c4e;--navy2:#243d6b;--dark:#0f1d35;--gold:#c9a84c;--goldl:#f0d080;--bg:#f4f7fb;--surf:#fff;--surf2:#f0f4fa;--bord:#d8e2f0;--txt:#0f1d35;--txt2:#4a5a72;--txt3:#8a9bb8;--grn:#1D9E75;--red:#A32D2D;--r:10px;--rl:16px}
-*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
 .screen{display:none;min-height:100vh;flex-direction:column}.screen.act{display:flex}
 #scLogin{align-items:center;justify-content:center;background:var(--dark);position:relative;overflow:hidden}
 #scLogin::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 100% 70% at 50% -10%,#243d6b,transparent 65%);pointer-events:none}
@@ -22,9 +25,8 @@
 .lf input{width:100%;padding:12px 15px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:10px;color:#fff;font-size:14px;font-family:'Inter',sans-serif;outline:none;transition:border .2s}
 .lf input::placeholder{color:rgba(255,255,255,.25)}.lf input:focus{border-color:var(--gold)}
 .lbtn{width:100%;padding:13px;background:var(--gold);border:none;border-radius:10px;color:var(--dark);font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-top:.5rem;letter-spacing:.04em;transition:all .2s}.lbtn:hover{background:var(--goldl)}
-.lbtn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.lbtn:disabled{opacity:.6;cursor:not-allowed}
 .lerr{font-size:13px;color:#f87171;text-align:center;min-height:20px;margin-top:.5rem;padding:4px}
-.linfo{font-size:13px;color:#5de0a8;text-align:center;min-height:20px;margin-top:.5rem;padding:4px}
 #scPend{align-items:center;justify-content:center;background:var(--dark)}
 .pcard{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:2.5rem;max-width:440px;text-align:center;color:#fff}
 .picon{font-size:52px;color:var(--gold);margin-bottom:1rem}
@@ -105,7 +107,7 @@ input:focus,select:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(26,4
 .modal{background:#fff;border-radius:18px;padding:2rem;width:500px;max-width:95vw;border:1px solid var(--bord)}
 .modal-t{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--navy);margin-bottom:1.25rem;display:flex;align-items:center;gap:8px}
 .mac{display:flex;gap:10px;margin-top:1.5rem;justify-content:flex-end}
-.lov{display:none;position:fixed;inset:0;background:rgba(10,20,40,.75);z-index:9997;align-items:center;justify-content:center;backdrop-filter:blur(4px)}.lov.open{display:flex}
+.lov{display:none;position:fixed;inset:0;background:rgba(10,20,40,.8);z-index:9997;align-items:center;justify-content:center}.lov.open{display:flex}
 .lbox{background:#1a2c4e;border-radius:16px;padding:2rem 2.5rem;text-align:center;color:#fff;border:1px solid rgba(255,255,255,.1)}
 .spin{width:36px;height:36px;border:3px solid rgba(255,255,255,.2);border-top-color:var(--gold);border-radius:50%;animation:sp .8s linear infinite;margin:0 auto 1rem}
 @keyframes sp{to{transform:rotate(360deg)}}
@@ -127,343 +129,6 @@ input:focus,select:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(26,4
 </style>
 </head>
 <body>
-<!-- Firebase SDK -->
-<script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, addDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-
-const firebaseConfig = {
-  apiKey: "AIzaSyCPqDz6tqhF0c7EMwYEVBNLcotALCT08Fg",
-  authDomain: "r8concursos.firebaseapp.com",
-  projectId: "r8concursos",
-  storageBucket: "r8concursos.firebasestorage.app",
-  messagingSenderId: "980113913929",
-  appId: "1:980113913929:web:9e86e77e5cdfe6ad90a798"
-};
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-// ═══ HELPERS ═══
-const SK = 'r8_session';
-const WK = 'r8_wa';
-const COLORS = ['#534AB7','#1D9E75','#854F0B','#185FA5','#D85A30','#D4537E','#0F6E56','#c9a84c'];
-const MODS = [
-  {id:'plan',name:'Planejamento Estratégico',ico:'ti-clipboard-list',cls:'plan',icoCls:'ico-plan',btnCls:'btn-plan',tagCls:'tag-plan',tag:'Planejamento',file:'r8_planejamento.html',desc:'Metas diárias, revisões espaçadas, cronômetros, simulados e análise de desempenho.',feats:['Metas diárias automáticas','Revisões em 24h e 7 dias','Cronômetros de estudo','Gráficos de desempenho','Exportação em PDF','Sistema de dificuldades']},
-  {id:'proto',name:'Protocolo 45 Dias',ico:'ti-bolt',cls:'proto',icoCls:'ico-proto',btnCls:'btn-proto',tagCls:'tag-proto',tag:'Intensivo',file:'r8_protocolo45.html',desc:'Plano intensivo para a reta final com simulados frequentes e revisões diárias.',feats:['Cronograma dia a dia','Sessões turbo','Revisões relâmpago','Simulados a cada 5 dias','Painel de urgência','Checklist crítico']},
-  {id:'ment',name:'Mentoria para Concursos',ico:'ti-users',cls:'ment',icoCls:'ico-ment',btnCls:'btn-ment',tagCls:'tag-ment',tag:'Mentoria',file:'r8_mentoria.html',desc:'Acompanhamento personalizado com trilha individual e orientação estratégica.',feats:['Trilha personalizada','Feedback semanal','Chat com mentor','Materiais exclusivos','Análise de edital','Sessões ao vivo']}
-];
-
-const ini = n => (n||'?').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'?';
-const rndColor = () => COLORS[Math.floor(Math.random()*COLORS.length)];
-const strColor = s => { let h=0; for(const c of s) h=((h<<5)-h)+c.charCodeAt(0); return COLORS[Math.abs(h)%COLORS.length]; };
-const showScreen = id => { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('act')); document.getElementById(id).classList.add('act'); };
-const toast = msg => { const t=document.getElementById('toast'); document.getElementById('toastMsg').textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); };
-const closeM = id => document.getElementById(id).classList.remove('open');
-const showLoad = txt => { /* Loading overlay disabled - instant load */ };
-const hideLoad = () => {};
-
-// Session
-function saveSession(user){ localStorage.setItem(SK, JSON.stringify({user, ts:Date.now()})); }
-function loadSession(){ try{ const s=JSON.parse(localStorage.getItem(SK)||'null'); if(s&&s.user&&(Date.now()-s.ts)<7*24*3600*1000) return s.user; }catch(e){} return null; }
-function clearSession(){ localStorage.removeItem(SK); }
-
-let CU = null, resetTarget = null;
-
-// ═══ AUTH ═══
-window.tab = function(t){
-  document.getElementById('fLogin').style.display = t==='login'?'':'none';
-  document.getElementById('fReg').style.display = t==='reg'?'':'none';
-  document.querySelectorAll('.ltab').forEach((b,i)=>b.classList.toggle('on',(i===0&&t==='login')||(i===1&&t==='reg')));
-  ['lErr','rErr'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='';});
-};
-
-window.doLogin = async function(){
-  const u = document.getElementById('lU').value.trim();
-  const p = document.getElementById('lP').value;
-  const err = document.getElementById('lErr');
-  if(!u||!p){err.textContent='Preencha usuário e senha.';return;}
-  showLoad('Verificando...');
-  try{
-    // Query Firestore for user
-    const q = query(collection(db,'r8_users'), where('username','==',u.toLowerCase()));
-    const snap = await getDocs(q);
-    hideLoad();
-    if(snap.empty){err.textContent='Usuário não encontrado.';return;}
-    const userDoc = snap.docs[0];
-    const user = {id:userDoc.id, ...userDoc.data()};
-    if(user.password !== p){err.textContent='Senha incorreta.';return;}
-    if(user.status==='blocked'){err.textContent='Conta bloqueada. Contate o administrador.';return;}
-    if(user.status==='pending'){
-      document.getElementById('pName').textContent=user.name+' (@'+user.username+')';
-      showScreen('scPend');return;
-    }
-    saveSession(user);
-    CU = user;
-    enterHub();
-  }catch(e){
-    hideLoad();
-    err.textContent='Erro de conexão. Verifique sua internet.';
-    console.error(e);
-  }
-};
-
-window.doRegister = async function(){
-  const name = document.getElementById('rN').value.trim();
-  const u = document.getElementById('rU').value.trim();
-  const p = document.getElementById('rP').value;
-  const err = document.getElementById('rErr');
-  if(!name||!u||!p){err.textContent='Preencha todos os campos.';return;}
-  if(u.length<3){err.textContent='Usuário deve ter ao menos 3 caracteres.';return;}
-  showLoad('Criando conta...');
-  try{
-    // Check if username exists
-    const q = query(collection(db,'r8_users'), where('username','==',u.toLowerCase()));
-    const snap = await getDocs(q);
-    if(!snap.empty){hideLoad();err.textContent='Usuário já existe.';return;}
-    // Create user
-    await addDoc(collection(db,'r8_users'),{
-      username: u.toLowerCase(),
-      name, password:p, role:'aluno', status:'pending',
-      color: strColor(u), planos:{plan:false,proto:false,ment:false},
-      created: Date.now()
-    });
-    hideLoad();
-    document.getElementById('pName').textContent=name+' (@'+u+')';
-    showScreen('scPend');
-    toast('Solicitação enviada!');
-  }catch(e){
-    hideLoad();
-    err.textContent='Erro ao criar conta. Tente novamente.';
-    console.error(e);
-  }
-};
-
-window.doLogout = function(){
-  clearSession(); CU=null;
-  document.getElementById('lU').value='';
-  document.getElementById('lP').value='';
-  tab('login');
-  showScreen('scLogin');
-};
-
-function enterHub(){
-  const user=CU;
-  const col=user.color||strColor(user.username);
-  const av=document.getElementById('hubAv');
-  av.textContent=ini(user.name); av.style.background=col;
-  document.getElementById('hubNm').textContent=user.name.split(' ')[0];
-  document.getElementById('hubWelcome').textContent=user.name.split(' ')[0];
-  document.getElementById('btnAdmin').style.display=user.role==='admin'?'':'none';
-  showScreen('scHub');
-  renderMods();
-  updateDot();
-  initWa();
-  toast('Bem-vindo(a), '+user.name.split(' ')[0]+'!');
-}
-
-// ═══ MODULES ═══
-function renderMods(){
-  if(!CU)return;
-  const pl=CU.planos||{};
-  const ativos=MODS.filter(m=>pl[m.id]).map(m=>m.name);
-  document.getElementById('planosLabel').textContent=ativos.length?ativos.join(', '):'Nenhum módulo liberado';
-  const grid=document.getElementById('modsGrid'); grid.innerHTML='';
-  MODS.forEach(m=>{
-    const ok=pl[m.id]||CU.role==='admin';
-    const feats=m.feats.map(f=>`<div class="mod-feat ${ok?'fok':'fno'}"><i class="ti ${ok?'ti-circle-check':'ti-circle-x'}"></i>${f}</div>`).join('');
-    const div=document.createElement('div');
-    div.className='mod '+m.cls+(ok?'':' locked');
-    div.innerHTML=`<div class="mod-ico ${m.icoCls}"><i class="ti ${m.ico}"></i>${!ok?'<div class="lock-b"><i class="ti ti-lock" style="font-size:10px"></i></div>':''}</div><div class="mod-tag ${m.tagCls}"><i class="ti ${m.ico}" style="font-size:11px"></i>${m.tag}</div><div class="mod-title">${m.name}</div><div class="mod-desc">${m.desc}</div><div class="mod-feats">${feats}</div>${!ok?'<div class="locked-msg"><i class="ti ti-lock" style="font-size:11px;vertical-align:-1px"></i> Módulo não incluso no seu plano.</div>':''}<button class="mod-btn ${ok?m.btnCls:'btn-lock'}" ${ok?`onclick="openMod('${m.file}')"`:' disabled'}><i class="ti ${ok?'ti-external-link':'ti-lock'}"></i> ${ok?'Acessar '+m.name:'Sem acesso'}</button>`;
-    grid.appendChild(div);
-  });
-}
-
-window.openMod = function(file){
-  if(CU){
-    saveSession(CU);
-    try{
-      const encoded = btoa(JSON.stringify(CU));
-      // Same tab - avoids 404 on GitHub Pages / Netlify
-      window.location.href = file + '?u=' + encoded;
-    }catch(e){ window.location.href = file; }
-  }
-};
-
-// ═══ ADMIN ═══
-async function updateDot(){
-  if(!CU||CU.role!=='admin')return;
-  try{
-    const q=query(collection(db,'r8_users'),where('status','==','pending'));
-    const snap=await getDocs(q);
-    const n=snap.size;
-    const dot=document.getElementById('adminDot');
-    dot.style.display=n>0?'inline-flex':'none';
-    dot.textContent=n;
-  }catch(e){}
-}
-
-window.renderAdmin = async function(){
-  showLoad('Carregando usuários...');
-  try{
-    const snap = await getDocs(collection(db,'r8_users'));
-    hideLoad();
-    const users = snap.docs.map(d=>{return {id:d.id,...d.data()}}).sort((a,b)=>a.created-b.created);
-    const pend = users.filter(u=>u.status==='pending');
-    const rest = users.filter(u=>u.status!=='pending');
-    
-    // Pending
-    const pEl=document.getElementById('admPend');
-    pEl.innerHTML=pend.length?'':'<div class="empty">Nenhuma solicitação pendente. ✓</div>';
-    pend.forEach(u=>{
-      const col=u.color||strColor(u.username);
-      const d=document.createElement('div'); d.className='urow pend';
-      d.innerHTML=`<div class="urow-top"><div class="uav" style="background:${col}">${ini(u.name)}</div><div class="uinfo"><div class="uname">${u.name} <span class="bg bgo">Pendente</span></div><div class="usub">@${u.username}</div></div><div class="uacts"><button class="btn btn-su" style="font-size:12px;padding:7px 14px" onclick="approveUser('${u.id}')"><i class="ti ti-check"></i> Aprovar</button><button class="btn btn-da" style="font-size:12px;padding:7px 14px" onclick="rejectUser('${u.id}')"><i class="ti ti-x"></i> Rejeitar</button></div></div>`;
-      pEl.appendChild(d);
-    });
-    
-    // Users
-    const uEl=document.getElementById('admUsers'); uEl.innerHTML='';
-    if(!rest.length){uEl.innerHTML='<div class="empty">Nenhum usuário.</div>';return;}
-    rest.forEach(u=>{
-      const col=u.color||strColor(u.username);
-      const isMe=CU&&u.id===CU.id;
-      const sb=u.status==='approved'?'<span class="bg bok">Aprovado</span>':'<span class="bg bre">Bloqueado</span>';
-      const plAtivos=MODS.filter(m=>(u.planos||{})[m.id]).map(m=>`<span class="bg" style="background:#e6edf6;color:var(--navy);font-size:10px">${m.name.split(' ')[0]}</span>`).join(' ')||'<span style="color:var(--txt3);font-size:11px">Nenhum</span>';
-      const d=document.createElement('div'); d.className='urow';
-      d.innerHTML=`<div class="urow-top"><div class="uav" style="background:${col}">${ini(u.name)}</div><div class="uinfo"><div class="uname">${u.name} ${u.role==='admin'?'<span class="bg bgo">Admin</span>':''} ${sb}</div><div class="usub">@${u.username} · ${plAtivos}</div></div><div class="uacts"><button class="bic" title="Senha" onclick="openReset('${u.id}','${u.name}')"><i class="ti ti-key"></i></button>${!isMe&&u.status==='approved'?`<button class="bic" onclick="blockUser('${u.id}')"><i class="ti ti-lock"></i></button>`:''}${!isMe&&u.status==='blocked'?`<button class="bic ok" onclick="unblockUser('${u.id}')"><i class="ti ti-lock-open"></i></button>`:''}${!isMe?`<button class="bic del" onclick="delUser('${u.id}')"><i class="ti ti-trash"></i></button>`:''}</div></div><div class="uplanos">${MODS.map(m=>{const on=(u.planos||{})[m.id]||false;return`<div class="ptog${on?' on':''}${on&&m.id==='proto'?' tp':''}" onclick="togPlano('${u.id}','${m.id}')"><div class="ptog-l"><i class="ti ${m.ico}" style="color:${on?(m.id==='proto'?'var(--red)':'var(--grn)'):'var(--txt3)'}"></i>${m.name.split(' ').slice(0,2).join(' ')}</div><div class="psw${on?' on':''}"></div></div>`;}).join('')}</div>`;
-      uEl.appendChild(d);
-    });
-    updateDot();
-  }catch(e){ hideLoad(); toast('Erro ao carregar usuários.'); console.error(e); }
-};
-
-window.approveUser = async function(id){
-  await updateDoc(doc(db,'r8_users',id),{status:'approved'});
-  toast('Usuário aprovado!'); renderAdmin();
-};
-window.rejectUser = async function(id){
-  if(!confirm('Rejeitar esta conta?'))return;
-  await deleteDoc(doc(db,'r8_users',id));
-  toast('Conta rejeitada.'); renderAdmin();
-};
-window.blockUser = async function(id){
-  await updateDoc(doc(db,'r8_users',id),{status:'blocked'});
-  toast('Bloqueado.'); renderAdmin();
-};
-window.unblockUser = async function(id){
-  await updateDoc(doc(db,'r8_users',id),{status:'approved'});
-  toast('Desbloqueado.'); renderAdmin();
-};
-window.delUser = async function(id){
-  if(!confirm('Excluir permanentemente?'))return;
-  await deleteDoc(doc(db,'r8_users',id));
-  toast('Excluído.'); renderAdmin();
-};
-
-window.togPlano = async function(uid,mid){
-  try{
-    const ref=doc(db,'r8_users',uid);
-    const snap=await getDoc(ref);
-    if(!snap.exists())return;
-    const planos=Object.assign({plan:false,proto:false,ment:false},snap.data().planos||{});
-    planos[mid]=!planos[mid];
-    await updateDoc(ref,{planos});
-    // Update session if it's current user
-    if(CU&&CU.id===uid){CU.planos=planos;saveSession(CU);renderMods();}
-    toast(planos[mid]?'Módulo liberado!':'Módulo removido.');
-    renderAdmin();
-  }catch(e){toast('Erro ao atualizar.');console.error(e);}
-};
-
-window.openNew = function(){
-  ['mnN','mnU','mnP'].forEach(i=>document.getElementById(i).value='');
-  document.getElementById('mnR').value='aluno';
-  document.getElementById('mnM1').checked=true;
-  document.getElementById('mnM2').checked=false;
-  document.getElementById('mnM3').checked=false;
-  document.getElementById('mnErr').textContent='';
-  document.getElementById('mNew').classList.add('open');
-};
-window.admCreate = async function(){
-  const n=document.getElementById('mnN').value.trim(),u=document.getElementById('mnU').value.trim(),p=document.getElementById('mnP').value,r=document.getElementById('mnR').value,err=document.getElementById('mnErr');
-  if(!n||!u||!p){err.textContent='Preencha todos os campos.';return;}
-  const q=query(collection(db,'r8_users'),where('username','==',u.toLowerCase()));
-  const snap=await getDocs(q);
-  if(!snap.empty){err.textContent='Usuário já existe.';return;}
-  const planos={plan:document.getElementById('mnM1').checked,proto:document.getElementById('mnM2').checked,ment:document.getElementById('mnM3').checked};
-  await addDoc(collection(db,'r8_users'),{username:u.toLowerCase(),name:n,password:p,role:r,status:'approved',color:rndColor(),planos,created:Date.now()});
-  closeM('mNew'); toast('"'+n+'" criado!'); renderAdmin();
-};
-window.openReset = function(id,name){
-  resetTarget=id;
-  document.getElementById('resetLbl').textContent=name;
-  document.getElementById('resetP').value='';
-  document.getElementById('mReset').classList.add('open');
-};
-window.doReset = async function(){
-  const p=document.getElementById('resetP').value;
-  if(!p){alert('Informe a nova senha.');return;}
-  await updateDoc(doc(db,'r8_users',resetTarget),{password:p});
-  closeM('mReset'); toast('Senha redefinida!');
-};
-window.closeM = closeM;
-window.showScreen = showScreen;
-
-// ═══ WHATSAPP ═══
-window.waOpen = function(e){e.preventDefault();e.stopPropagation();const n=localStorage.getItem(WK)||'';if(!n){if(CU&&CU.role==='admin')waToggle(e);else alert('Suporte não configurado.');return;}window.open('https://wa.me/'+n+'?text='+encodeURIComponent('Olá! Preciso de suporte com a plataforma R8-Concursos.'),'_blank');};
-window.waToggle = function(e){if(e){e.preventDefault();e.stopPropagation();}const p=document.getElementById('waPanel');p.classList.toggle('open');if(p.classList.contains('open')){document.getElementById('waInp').value=localStorage.getItem(WK)||'';waPrev();}};
-window.waPrev = function(){const n=(document.getElementById('waInp').value||'').replace(/\D/g,'');document.getElementById('waPrevEl').textContent=n.length>=10?'✓ wa.me/'+n:'';};
-window.waSave = function(){const n=(document.getElementById('waInp').value||'').replace(/\D/g,'');if(n.length<10){alert('Número inválido.');return;}localStorage.setItem(WK,n);document.getElementById('waPanel').classList.remove('open');toast('WhatsApp salvo!');};
-function initWa(){if(CU&&CU.role==='admin'){const b=document.getElementById('waAdm');if(b)b.style.display='flex';}document.addEventListener('click',function(e){const p=document.getElementById('waPanel'),btn=document.getElementById('waBtn');if(p&&btn&&!btn.contains(e.target))p.classList.remove('open');});}
-
-// ═══ INIT ═══
-(async function(){
-  // Show login immediately - don't wait for Firebase
-  showScreen('scLogin');
-  
-  // Check cached session first (instant)
-  const cached = loadSession();
-  if(cached && cached.status === 'approved'){
-    // Use cached session immediately - no Firebase roundtrip
-    CU = cached;
-    enterHub();
-    // Then refresh from Firebase silently in background
-    try{
-      const uq=query(collection(db,'r8_users'),where('username','==',cached.username));
-      const usnap=await getDocs(uq);
-      if(!usnap.empty){
-        const fresh={id:usnap.docs[0].id,...usnap.docs[0].data()};
-        if(fresh.status==='approved'){
-          saveSession(fresh);
-          CU=fresh;
-          renderMods(); // Refresh modules with updated planos
-        } else {
-          // User was blocked/removed
-          clearSession(); CU=null; showScreen('scLogin');
-        }
-      }
-    }catch(e){ /* Silent fail - stay with cached */ }
-    return;
-  }
-  
-  // No session - ensure admin exists (only if never done before)
-  if(!localStorage.getItem('r8_admin_seeded')){
-    try{
-      const q=query(collection(db,'r8_users'),where('username','==','admin'));
-      const snap=await getDocs(q);
-      if(snap.empty){
-        await addDoc(collection(db,'r8_users'),{
-          username:'admin',name:'Administrador R8',password:'admin123',
-          role:'admin',status:'approved',color:'#c9a84c',
-          planos:{plan:true,proto:true,ment:true},created:Date.now()
-        });
-      }
-      localStorage.setItem('r8_admin_seeded','1');
-    }catch(e){ console.error('Seed error:',e); }
-  }
-})();
-</script>
-
 <div class="lov" id="loadOv"><div class="lbox"><div class="spin"></div><div class="spin-txt" id="spinTxt">Conectando...</div></div></div>
 <div class="toast" id="toast"><i class="ti ti-check"></i><span id="toastMsg"></span></div>
 
@@ -490,7 +155,7 @@ function initWa(){if(CU&&CU.role==='admin'){const b=document.getElementById('waA
 
 <!-- PENDING -->
 <div class="screen" id="scPend">
-  <div class="pcard"><div class="picon"><i class="ti ti-hourglass"></i></div><div class="ptitle">Aguardando aprovação</div><div class="pname" id="pName"></div><div class="pmsg">Solicitação enviada! O administrador precisa aprovar seu acesso e liberar os módulos do seu plano.</div><button class="pbtn" onclick="showScreen('scLogin')"><i class="ti ti-arrow-left"></i> Voltar</button></div>
+  <div class="pcard"><div class="picon"><i class="ti ti-hourglass"></i></div><div class="ptitle">Aguardando aprovação</div><div class="pname" id="pName"></div><div class="pmsg">Solicitação enviada! O administrador precisa aprovar seu acesso.</div><button class="pbtn" onclick="showScreen('scLogin')"><i class="ti ti-arrow-left"></i> Voltar</button></div>
 </div>
 
 <!-- HUB -->
@@ -519,7 +184,7 @@ function initWa(){if(CU&&CU.role==='admin'){const b=document.getElementById('waA
 </div>
 
 <!-- MODALS -->
-<div class="mov" id="mNew"><div class="modal"><div class="modal-t"><i class="ti ti-user-plus"></i> Adicionar usuário</div><div class="fl" style="margin-bottom:12px"><label class="lb">Nome completo</label><input type="text" id="mnN" placeholder="Nome do aluno"/></div><div class="fl" style="margin-bottom:12px"><label class="lb">Usuário</label><input type="text" id="mnU" placeholder="Login"/></div><div class="fl" style="margin-bottom:12px"><label class="lb">Senha</label><input type="password" id="mnP" placeholder="Senha inicial"/></div><div class="fl" style="margin-bottom:12px"><label class="lb">Perfil</label><select id="mnR"><option value="aluno">Aluno</option><option value="admin">Administrador</option></select></div><div class="fl"><label class="lb" style="margin-bottom:8px">Módulos liberados</label><div style="display:flex;flex-direction:column;gap:8px"><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="mnM1" checked style="width:16px;height:16px"/> Planejamento Estratégico</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="mnM2" style="width:16px;height:16px"/> Protocolo 45 Dias</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="mnM3" style="width:16px;height:16px"/> Mentoria para Concursos</label></div></div><div id="mnErr" style="font-size:12px;color:var(--red);margin-top:8px;min-height:16px"></div><div class="mac"><button class="btn btn-gh" onclick="closeM('mNew')">Cancelar</button><button class="btn btn-pr" onclick="admCreate()"><i class="ti ti-check"></i> Criar</button></div></div></div>
+<div class="mov" id="mNew"><div class="modal"><div class="modal-t"><i class="ti ti-user-plus"></i> Adicionar usuário</div><div class="fl" style="margin-bottom:12px"><label class="lb">Nome completo</label><input type="text" id="mnN" placeholder="Nome"/></div><div class="fl" style="margin-bottom:12px"><label class="lb">Usuário</label><input type="text" id="mnU" placeholder="Login"/></div><div class="fl" style="margin-bottom:12px"><label class="lb">Senha</label><input type="password" id="mnP" placeholder="Senha"/></div><div class="fl" style="margin-bottom:12px"><label class="lb">Perfil</label><select id="mnR"><option value="aluno">Aluno</option><option value="admin">Administrador</option></select></div><div class="fl"><label class="lb" style="margin-bottom:8px">Módulos</label><div style="display:flex;flex-direction:column;gap:8px"><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="mnM1" checked style="width:16px;height:16px"/> Planejamento</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="mnM2" style="width:16px;height:16px"/> Protocolo 45 Dias</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="mnM3" style="width:16px;height:16px"/> Mentoria</label></div></div><div id="mnErr" style="font-size:12px;color:var(--red);margin-top:8px;min-height:16px"></div><div class="mac"><button class="btn btn-gh" onclick="closeM('mNew')">Cancelar</button><button class="btn btn-pr" onclick="admCreate()"><i class="ti ti-check"></i> Criar</button></div></div></div>
 <div class="mov" id="mReset"><div class="modal"><div class="modal-t"><i class="ti ti-key"></i> Redefinir senha</div><p style="font-size:14px;color:var(--txt2);margin-bottom:1rem">Usuário: <strong id="resetLbl"></strong></p><div class="fl"><label class="lb">Nova senha</label><input type="password" id="resetP" placeholder="Nova senha"/></div><div class="mac"><button class="btn btn-gh" onclick="closeM('mReset')">Cancelar</button><button class="btn btn-pr" onclick="doReset()"><i class="ti ti-check"></i> Salvar</button></div></div></div>
 
 <!-- WHATSAPP -->
@@ -527,5 +192,321 @@ function initWa(){if(CU&&CU.role==='admin'){const b=document.getElementById('waA
   <div class="wa-pan" id="waPanel"><div style="font-size:13px;font-weight:700;color:#1a2c4e;margin-bottom:8px;display:flex;align-items:center;gap:6px;font-family:'Syne',sans-serif"><i class="ti ti-brand-whatsapp" style="color:#25D366;font-size:16px"></i> Configurar WhatsApp</div><div style="font-size:11px;color:#8a9bb8;margin-bottom:8px;line-height:1.5">Número com código do país + DDD.<br>Exemplo: 5511999999999</div><input class="wa-inp" type="tel" id="waInp" placeholder="5511999999999" maxlength="15" oninput="waPrev()"/><div class="wa-prev" id="waPrevEl"></div><button class="wa-save" onclick="waSave()"><i class="ti ti-device-floppy" style="font-size:12px"></i> Salvar</button></div>
   <div style="position:relative"><div class="wa-tip">💬 Falar com suporte</div><a class="wa-bub" href="#" onclick="waOpen(event)"><svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg><div class="wa-adm" id="waAdm" style="display:none" onclick="waToggle(event)">⚙</div></a></div>
 </div>
+
+<script>
+// ═══ FIREBASE INIT (compat SDK - no module scope issues) ═══
+firebase.initializeApp({
+  apiKey: "AIzaSyCPqDz6tqhF0c7EMwYEVBNLcotALCT08Fg",
+  authDomain: "r8concursos.firebaseapp.com",
+  projectId: "r8concursos",
+  storageBucket: "r8concursos.firebasestorage.app",
+  messagingSenderId: "980113913929",
+  appId: "1:980113913929:web:9e86e77e5cdfe6ad90a798"
+});
+var db = firebase.firestore();
+
+// ═══ CONSTANTS ═══
+var SK = 'r8_session';
+var WK = 'r8_wa';
+var COLORS = ['#534AB7','#1D9E75','#854F0B','#185FA5','#D85A30','#D4537E','#0F6E56','#c9a84c'];
+var MODS = [
+  {id:'plan',name:'Planejamento Estratégico',ico:'ti-clipboard-list',cls:'plan',icoCls:'ico-plan',btnCls:'btn-plan',tagCls:'tag-plan',tag:'Planejamento',file:'r8_planejamento.html',desc:'Metas diárias, revisões espaçadas, cronômetros, simulados e análise de desempenho.',feats:['Metas diárias automáticas','Revisões em 24h e 7 dias','Cronômetros de estudo','Gráficos de desempenho','Exportação em PDF','Sistema de dificuldades']},
+  {id:'proto',name:'Protocolo 45 Dias',ico:'ti-bolt',cls:'proto',icoCls:'ico-proto',btnCls:'btn-proto',tagCls:'tag-proto',tag:'Intensivo',file:'r8_protocolo45.html',desc:'Plano intensivo para a reta final com simulados frequentes e revisões diárias.',feats:['Cronograma dia a dia','Sessões turbo','Revisões relâmpago','Simulados a cada 5 dias','Painel de urgência','Checklist crítico']},
+  {id:'ment',name:'Mentoria para Concursos',ico:'ti-users',cls:'ment',icoCls:'ico-ment',btnCls:'btn-ment',tagCls:'tag-ment',tag:'Mentoria',file:'r8_mentoria.html',desc:'Acompanhamento personalizado com trilha individual e orientação estratégica.',feats:['Trilha personalizada','Feedback semanal','Chat com mentor','Materiais exclusivos','Análise de edital','Sessões ao vivo']}
+];
+
+// ═══ HELPERS ═══
+var CU = null, resetTarget = null;
+function ini(n){ return (n||'?').split(' ').slice(0,2).map(function(w){return w[0]||''}).join('').toUpperCase()||'?'; }
+function rndColor(){ return COLORS[Math.floor(Math.random()*COLORS.length)]; }
+function strColor(s){ var h=0; for(var i=0;i<s.length;i++) h=((h<<5)-h)+s.charCodeAt(i); return COLORS[Math.abs(h)%COLORS.length]; }
+function showScreen(id){ document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('act');}); document.getElementById(id).classList.add('act'); }
+function toast(msg){ var t=document.getElementById('toast'); document.getElementById('toastMsg').textContent=msg; t.classList.add('show'); setTimeout(function(){t.classList.remove('show');},3000); }
+function closeM(id){ document.getElementById(id).classList.remove('open'); }
+function showLoad(txt){ document.getElementById('spinTxt').textContent=txt||'Aguarde...'; document.getElementById('loadOv').classList.add('open'); }
+function hideLoad(){ document.getElementById('loadOv').classList.remove('open'); }
+function saveSession(user){ localStorage.setItem(SK, JSON.stringify({user:user, ts:Date.now()})); }
+function loadSession(){ try{ var s=JSON.parse(localStorage.getItem(SK)||'null'); if(s&&s.user&&(Date.now()-s.ts)<7*24*3600*1000) return s.user; }catch(e){} return null; }
+function clearSession(){ localStorage.removeItem(SK); }
+
+// ═══ TAB ═══
+function tab(t){
+  document.getElementById('fLogin').style.display = t==='login'?'':'none';
+  document.getElementById('fReg').style.display = t==='reg'?'':'none';
+  document.querySelectorAll('.ltab').forEach(function(b,i){b.classList.toggle('on',(i===0&&t==='login')||(i===1&&t==='reg'));});
+  ['lErr','rErr'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent='';});
+}
+
+// ═══ LOGIN ═══
+function doLogin(){
+  var u = document.getElementById('lU').value.trim();
+  var p = document.getElementById('lP').value;
+  var err = document.getElementById('lErr');
+  if(!u||!p){err.textContent='Preencha usuário e senha.';return;}
+  showLoad('Verificando...');
+  db.collection('r8_users').where('username','==',u.toLowerCase()).get()
+    .then(function(snap){
+      hideLoad();
+      if(snap.empty){err.textContent='Usuário não encontrado.';return;}
+      var userDoc = snap.docs[0];
+      var user = Object.assign({id:userDoc.id}, userDoc.data());
+      if(user.password !== p){err.textContent='Senha incorreta.';return;}
+      if(user.status==='blocked'){err.textContent='Conta bloqueada. Contate o administrador.';return;}
+      if(user.status==='pending'){
+        document.getElementById('pName').textContent=user.name+' (@'+user.username+')';
+        showScreen('scPend');return;
+      }
+      saveSession(user);
+      CU = user;
+      enterHub();
+    })
+    .catch(function(e){
+      hideLoad();
+      err.textContent='Erro de conexão. Verifique sua internet.';
+      console.error(e);
+    });
+}
+
+// ═══ REGISTER ═══
+function doRegister(){
+  var name = document.getElementById('rN').value.trim();
+  var u = document.getElementById('rU').value.trim();
+  var p = document.getElementById('rP').value;
+  var err = document.getElementById('rErr');
+  if(!name||!u||!p){err.textContent='Preencha todos os campos.';return;}
+  if(u.length<3){err.textContent='Usuário deve ter ao menos 3 caracteres.';return;}
+  showLoad('Criando conta...');
+  db.collection('r8_users').where('username','==',u.toLowerCase()).get()
+    .then(function(snap){
+      if(!snap.empty){hideLoad();err.textContent='Usuário já existe.';return;}
+      return db.collection('r8_users').add({
+        username:u.toLowerCase(), name:name, password:p,
+        role:'aluno', status:'pending',
+        color:strColor(u), planos:{plan:false,proto:false,ment:false},
+        created:Date.now()
+      });
+    })
+    .then(function(ref){
+      if(!ref) return;
+      hideLoad();
+      document.getElementById('pName').textContent=name+' (@'+u+')';
+      showScreen('scPend');
+      toast('Solicitação enviada!');
+    })
+    .catch(function(e){
+      hideLoad();
+      err.textContent='Erro ao criar conta. Tente novamente.';
+      console.error(e);
+    });
+}
+
+// ═══ LOGOUT ═══
+function doLogout(){
+  clearSession(); CU=null;
+  document.getElementById('lU').value='';
+  document.getElementById('lP').value='';
+  tab('login');
+  showScreen('scLogin');
+}
+
+// ═══ ENTER HUB ═══
+function enterHub(){
+  var user = CU;
+  var col = user.color||strColor(user.username);
+  var av = document.getElementById('hubAv');
+  av.textContent=ini(user.name); av.style.background=col;
+  document.getElementById('hubNm').textContent=user.name.split(' ')[0];
+  document.getElementById('hubWelcome').textContent=user.name.split(' ')[0];
+  document.getElementById('btnAdmin').style.display=user.role==='admin'?'':'none';
+  showScreen('scHub');
+  renderMods();
+  updateDot();
+  initWa();
+  toast('Bem-vindo(a), '+user.name.split(' ')[0]+'!');
+}
+
+// ═══ MODULES ═══
+function renderMods(){
+  if(!CU)return;
+  var pl = CU.planos||{};
+  var ativos = MODS.filter(function(m){return pl[m.id];}).map(function(m){return m.name;});
+  document.getElementById('planosLabel').textContent=ativos.length?ativos.join(', '):'Nenhum módulo liberado';
+  var grid=document.getElementById('modsGrid'); grid.innerHTML='';
+  MODS.forEach(function(m){
+    var ok = pl[m.id]||CU.role==='admin';
+    var feats = m.feats.map(function(f){return '<div class="mod-feat '+(ok?'fok':'fno')+'"><i class="ti '+(ok?'ti-circle-check':'ti-circle-x')+'"></i>'+f+'</div>';}).join('');
+    var div=document.createElement('div');
+    div.className='mod '+m.cls+(ok?'':' locked');
+    div.innerHTML='<div class="mod-ico '+m.icoCls+'"><i class="ti '+m.ico+'"></i>'+(ok?'':'<div class="lock-b"><i class="ti ti-lock" style="font-size:10px"></i></div>')+'</div><div class="mod-tag '+m.tagCls+'"><i class="ti '+m.ico+'" style="font-size:11px"></i>'+m.tag+'</div><div class="mod-title">'+m.name+'</div><div class="mod-desc">'+m.desc+'</div><div class="mod-feats">'+feats+'</div>'+(ok?'':'<div class="locked-msg"><i class="ti ti-lock" style="font-size:11px;vertical-align:-1px"></i> Módulo não incluso no seu plano.</div>')+'<button class="mod-btn '+(ok?m.btnCls:'btn-lock')+'" '+(ok?'onclick="openMod(''+m.file+'')"':' disabled')+'><i class="ti '+(ok?'ti-external-link':'ti-lock')+'"></i> '+(ok?'Acessar '+m.name:'Sem acesso')+'</button>';
+    grid.appendChild(div);
+  });
+}
+
+function openMod(file){
+  if(CU){
+    // Always refresh user from Firebase before opening module
+    db.collection('r8_users').doc(CU.id).get()
+      .then(function(snap){
+        if(snap.exists){
+          var fresh = Object.assign({id:snap.id}, snap.data());
+          saveSession(fresh);
+          CU = fresh;
+        }
+        var encoded = btoa(JSON.stringify(CU));
+        window.location.href = file + '?u=' + encoded;
+      })
+      .catch(function(){
+        // Use cached user if Firebase fails
+        var encoded = btoa(JSON.stringify(CU));
+        window.location.href = file + '?u=' + encoded;
+      });
+  }
+}
+
+// ═══ ADMIN ═══
+function updateDot(){
+  if(!CU||CU.role!=='admin')return;
+  db.collection('r8_users').where('status','==','pending').get()
+    .then(function(snap){
+      var n=snap.size;
+      var dot=document.getElementById('adminDot');
+      dot.style.display=n>0?'inline-flex':'none';
+      dot.textContent=n;
+    });
+}
+
+function renderAdmin(){
+  showLoad('Carregando...');
+  db.collection('r8_users').orderBy('created').get()
+    .then(function(snap){
+      hideLoad();
+      var users=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+      var pend=users.filter(function(u){return u.status==='pending';});
+      var rest=users.filter(function(u){return u.status!=='pending';});
+      var pEl=document.getElementById('admPend');
+      pEl.innerHTML=pend.length?'':'<div class="empty">Nenhuma solicitação pendente. ✓</div>';
+      pend.forEach(function(u){
+        var col=u.color||strColor(u.username);
+        var d=document.createElement('div'); d.className='urow pend';
+        d.innerHTML='<div class="urow-top"><div class="uav" style="background:'+col+'">'+ini(u.name)+'</div><div class="uinfo"><div class="uname">'+u.name+' <span class="bg bgo">Pendente</span></div><div class="usub">@'+u.username+'</div></div><div class="uacts"><button class="btn btn-su" style="font-size:12px;padding:7px 14px" onclick="approveUser(''+u.id+'')"><i class="ti ti-check"></i> Aprovar</button><button class="btn btn-da" style="font-size:12px;padding:7px 14px" onclick="rejectUser(''+u.id+'')"><i class="ti ti-x"></i> Rejeitar</button></div></div>';
+        pEl.appendChild(d);
+      });
+      var uEl=document.getElementById('admUsers'); uEl.innerHTML='';
+      if(!rest.length){uEl.innerHTML='<div class="empty">Nenhum usuário.</div>';return;}
+      rest.forEach(function(u){
+        var col=u.color||strColor(u.username);
+        var isMe=CU&&u.id===CU.id;
+        var sb=u.status==='approved'?'<span class="bg bok">Aprovado</span>':'<span class="bg bre">Bloqueado</span>';
+        var plAtivos=MODS.filter(function(m){return (u.planos||{})[m.id];}).map(function(m){return '<span class="bg" style="background:#e6edf6;color:var(--navy);font-size:10px">'+m.name.split(' ')[0]+'</span>';}).join(' ')||'<span style="color:var(--txt3);font-size:11px">Nenhum</span>';
+        var d=document.createElement('div'); d.className='urow';
+        var planosHtml=MODS.map(function(m){
+          var on=(u.planos||{})[m.id]||false;
+          return '<div class="ptog'+(on?' on':'')+(on&&m.id==='proto'?' tp':'')+'" onclick="togPlano(''+u.id+'',''+m.id+'')"><div class="ptog-l"><i class="ti '+m.ico+'" style="color:'+(on?(m.id==='proto'?'var(--red)':'var(--grn)'):'var(--txt3)')+'"></i>'+m.name.split(' ').slice(0,2).join(' ')+'</div><div class="psw'+(on?' on':'')+'"></div></div>';
+        }).join('');
+        d.innerHTML='<div class="urow-top"><div class="uav" style="background:'+col+'">'+ini(u.name)+'</div><div class="uinfo"><div class="uname">'+u.name+' '+(u.role==='admin'?'<span class="bg bgo">Admin</span>':'')+' '+sb+'</div><div class="usub">@'+u.username+' · '+plAtivos+'</div></div><div class="uacts"><button class="bic" title="Senha" onclick="openReset(''+u.id+'',''+u.name+'')"><i class="ti ti-key"></i></button>'+(!isMe&&u.status==='approved'?'<button class="bic" onclick="blockUser(''+u.id+'')"><i class="ti ti-lock"></i></button>':'')+(!isMe&&u.status==='blocked'?'<button class="bic ok" onclick="unblockUser(''+u.id+'')"><i class="ti ti-lock-open"></i></button>':'')+(!isMe?'<button class="bic del" onclick="delUser(''+u.id+'')"><i class="ti ti-trash"></i></button>':'')+'</div></div><div class="uplanos">'+planosHtml+'</div>';
+        uEl.appendChild(d);
+      });
+      updateDot();
+    })
+    .catch(function(e){hideLoad();toast('Erro ao carregar usuários.');console.error(e);});
+}
+
+function approveUser(id){ db.collection('r8_users').doc(id).update({status:'approved'}).then(function(){toast('Aprovado!');renderAdmin();}).catch(function(e){toast('Erro.');console.error(e);}); }
+function rejectUser(id){ if(!confirm('Rejeitar?'))return; db.collection('r8_users').doc(id).delete().then(function(){toast('Rejeitado.');renderAdmin();}); }
+function blockUser(id){ db.collection('r8_users').doc(id).update({status:'blocked'}).then(function(){toast('Bloqueado.');renderAdmin();}); }
+function unblockUser(id){ db.collection('r8_users').doc(id).update({status:'approved'}).then(function(){toast('Desbloqueado.');renderAdmin();}); }
+function delUser(id){ if(!confirm('Excluir permanentemente?'))return; db.collection('r8_users').doc(id).delete().then(function(){toast('Excluído.');renderAdmin();}); }
+
+function togPlano(uid, mid){
+  db.collection('r8_users').doc(uid).get()
+    .then(function(snap){
+      if(!snap.exists)return;
+      var planos = Object.assign({plan:false,proto:false,ment:false}, snap.data().planos||{});
+      planos[mid] = !planos[mid];
+      return db.collection('r8_users').doc(uid).update({planos:planos})
+        .then(function(){
+          if(CU&&CU.id===uid){CU.planos=planos;saveSession(CU);renderMods();}
+          toast(planos[mid]?'Módulo liberado!':'Módulo removido.');
+          renderAdmin();
+        });
+    }).catch(function(e){toast('Erro.');console.error(e);});
+}
+
+function openNew(){
+  ['mnN','mnU','mnP'].forEach(function(i){document.getElementById(i).value='';});
+  document.getElementById('mnR').value='aluno';
+  document.getElementById('mnM1').checked=true;
+  document.getElementById('mnM2').checked=false;
+  document.getElementById('mnM3').checked=false;
+  document.getElementById('mnErr').textContent='';
+  document.getElementById('mNew').classList.add('open');
+}
+function admCreate(){
+  var n=document.getElementById('mnN').value.trim(),u=document.getElementById('mnU').value.trim(),p=document.getElementById('mnP').value,r=document.getElementById('mnR').value,err=document.getElementById('mnErr');
+  if(!n||!u||!p){err.textContent='Preencha todos os campos.';return;}
+  db.collection('r8_users').where('username','==',u.toLowerCase()).get()
+    .then(function(snap){
+      if(!snap.empty){err.textContent='Usuário já existe.';return;}
+      var planos={plan:document.getElementById('mnM1').checked,proto:document.getElementById('mnM2').checked,ment:document.getElementById('mnM3').checked};
+      return db.collection('r8_users').add({username:u.toLowerCase(),name:n,password:p,role:r,status:'approved',color:rndColor(),planos:planos,created:Date.now()})
+        .then(function(){closeM('mNew');toast('"'+n+'" criado!');renderAdmin();});
+    }).catch(function(e){err.textContent='Erro ao criar.';console.error(e);});
+}
+function openReset(id,name){ resetTarget=id; document.getElementById('resetLbl').textContent=name; document.getElementById('resetP').value=''; document.getElementById('mReset').classList.add('open'); }
+function doReset(){
+  var p=document.getElementById('resetP').value;
+  if(!p){alert('Informe a nova senha.');return;}
+  db.collection('r8_users').doc(resetTarget).update({password:p}).then(function(){closeM('mReset');toast('Senha redefinida!');});
+}
+
+// ═══ WHATSAPP ═══
+function waOpen(e){e.preventDefault();e.stopPropagation();var n=localStorage.getItem(WK)||'';if(!n){if(CU&&CU.role==='admin')waToggle(e);else alert('Suporte não configurado.');return;}window.open('https://wa.me/'+n+'?text='+encodeURIComponent('Olá! Preciso de suporte com a plataforma R8-Concursos.'),'_blank');}
+function waToggle(e){if(e){e.preventDefault();e.stopPropagation();}var p=document.getElementById('waPanel');p.classList.toggle('open');if(p.classList.contains('open')){document.getElementById('waInp').value=localStorage.getItem(WK)||'';waPrev();}}
+function waPrev(){var n=(document.getElementById('waInp').value||'').replace(/\D/g,'');document.getElementById('waPrevEl').textContent=n.length>=10?'✓ wa.me/'+n:'';}
+function waSave(){var n=(document.getElementById('waInp').value||'').replace(/\D/g,'');if(n.length<10){alert('Número inválido.');return;}localStorage.setItem(WK,n);document.getElementById('waPanel').classList.remove('open');toast('WhatsApp salvo!');}
+function initWa(){if(CU&&CU.role==='admin'){var b=document.getElementById('waAdm');if(b)b.style.display='flex';}document.addEventListener('click',function(e){var p=document.getElementById('waPanel'),btn=document.getElementById('waBtn');if(p&&btn&&!btn.contains(e.target))p.classList.remove('open');});}
+
+// ═══ INIT ═══
+window.addEventListener('load', function(){
+  // Show login immediately
+  showScreen('scLogin');
+  
+  // Check cached session
+  var cached = loadSession();
+  if(cached && cached.status === 'approved'){
+    CU = cached;
+    enterHub();
+    // Refresh user in background
+    db.collection('r8_users').doc(cached.id).get()
+      .then(function(snap){
+        if(snap.exists){
+          var fresh = Object.assign({id:snap.id}, snap.data());
+          if(fresh.status === 'approved'){
+            saveSession(fresh); CU=fresh; renderMods();
+          } else {
+            clearSession(); CU=null; showScreen('scLogin');
+          }
+        }
+      }).catch(function(){});
+    return;
+  }
+  
+  // Seed admin once
+  if(!localStorage.getItem('r8_admin_ok')){
+    db.collection('r8_users').where('username','==','admin').get()
+      .then(function(snap){
+        if(snap.empty){
+          return db.collection('r8_users').add({
+            username:'admin',name:'Administrador R8',password:'admin123',
+            role:'admin',status:'approved',color:'#c9a84c',
+            planos:{plan:true,proto:true,ment:true},created:Date.now()
+          });
+        }
+      })
+      .then(function(){localStorage.setItem('r8_admin_ok','1');})
+      .catch(function(){});
+  }
+});
+</script>
 </body>
 </html>

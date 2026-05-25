@@ -5,11 +5,11 @@
 (function(){
   var MID = 'proto';
   var KEY = 'r8_session';
-  
+
   function run(){
     var user = null;
-    
-    // 1. Try URL param ?u= (sent by hub)
+
+    // 1. URL param ?u= (passed by hub via window.location.href)
     try{
       var up = new URLSearchParams(location.search).get('u');
       if(up && up.length > 10){
@@ -18,35 +18,33 @@
         history.replaceState({},'',location.pathname);
       }
     }catch(e){}
-    
-    // 2. Try localStorage
+
+    // 2. localStorage fallback
     if(!user){
       try{
         var s = JSON.parse(localStorage.getItem(KEY)||'null');
-        if(s && s.user && (Date.now()-s.ts) < 7*24*3600*1000){
-          user = s.user;
-        }
+        if(s && s.user && (Date.now()-s.ts) < 7*24*3600*1000) user = s.user;
       }catch(e){}
     }
-    
+
     // 3. Not logged in
     if(!user){ location.replace('index.html'); return; }
     if(user.status !== 'approved'){ location.replace('index.html'); return; }
-    
+
     // 4. Check module permission
     if(user.role !== 'admin'){
       var pl = user.planos || {};
       if(!pl[MID]){
         document.body.style = 'margin:0;background:#0f1d35;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:Inter,sans-serif';
-        document.body.innerHTML = '<div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:2.5rem;max-width:400px;text-align:center;color:#fff"><div style="font-size:48px;margin-bottom:1rem">⛔</div><div style="font-family:Syne,sans-serif;font-size:20px;font-weight:700;margin-bottom:.5rem">Sem permissão</div><div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:1.5rem">Este módulo não está no seu plano. Solicite ao administrador.</div><a href=\"index.html\" style=\"display:inline-flex;align-items:center;gap:8px;padding:11px 24px;background:#c9a84c;border-radius:10px;color:#0f1d35;font-weight:700;text-decoration:none;font-size:14px\">← Voltar ao Hub</a></div>';
+        document.body.innerHTML = '<div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:2.5rem;max-width:400px;text-align:center;color:#fff"><div style="font-size:48px;margin-bottom:1rem">⛔</div><div style="font-family:Syne,sans-serif;font-size:20px;font-weight:700;margin-bottom:.5rem">Sem permissão</div><div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:1.5rem">Este módulo não está no seu plano.</div><a href=\"index.html\" style=\"display:inline-flex;align-items:center;gap:8px;padding:11px 24px;background:#c9a84c;border-radius:10px;color:#0f1d35;font-weight:700;text-decoration:none;font-size:14px\">← Voltar ao Hub</a></div>';
         return;
       }
     }
-    
-    // 5. Auth passed
+
+    // 5. Auth OK
     window.R8_USER = user;
     window.R8_MODULE_ID = MID;
-    
+
     function applyBadge(){
       var b=document.getElementById('userBadge');
       var a=document.getElementById('badgeAv');
@@ -60,18 +58,18 @@
       if(n) n.textContent=(user.name||'').split(' ')[0];
       if(user.role==='admin') document.querySelectorAll('[data-admin-only]').forEach(function(el){el.style.display='';});
     }
-    
+
     if(document.readyState==='loading'){
       document.addEventListener('DOMContentLoaded', applyBadge);
     } else {
       applyBadge();
     }
   }
-  
-  // Run immediately
+
   run();
 })();
 </script>
+
 
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
