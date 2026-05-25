@@ -464,54 +464,41 @@ sb.auth.onAuthStateChange(async (event, session) => {
 
   if(event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
     showLoad('Carregando perfil...');
+    console.log('[R8] Auth event:', event, 'user:', session.user.id);
 
-    // Timeout de segurança — 10 segundos
+    let profile = null;
+    let done = false;
+
+    // Timeout absoluto — 8 segundos
     const timeout = setTimeout(() => {
-      console.error('[R8] Timeout ao carregar perfil');
+      if(done) return;
+      done = true;
       hideLoad();
-      document.getElementById('lErr').textContent = 'Tempo esgotado. Tente novamente.';
+      console.error('[R8] TIMEOUT — profile nunca resolveu');
+      document.getElementById('lErr').textContent = 'Erro ao carregar perfil. Tente novamente.';
       showScreen('scLogin');
       sb.auth.signOut();
-    }, 10000);
+    }, 8000);
 
     try {
-      let profile = null;
+      // PRINCIPAL: query direta na tabela profiles
+      console.log('[R8] Buscando profile para:', session.user.id);
+      const { data, error } = await sb
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
 
-      // 1. Tenta RPC
-      try {
-        const rpc = await sb.rpc('get_my_profile');
-        console.log('[R8] RPC result:', rpc.data, rpc.error);
-        if (!rpc.error && rpc.data) {
-          profile = typeof rpc.data === 'string' ? JSON.parse(rpc.data) : rpc.data;
-        }
-      } catch(e) {
-        console.error('[R8] RPC exception:', e);
-      }
+      console.log('[R8] Profile query result:', data, error);
 
-      // 2. Fallback: query direta
-      if (!profile) {
-        console.log('[R8] RPC falhou, tentando query direta...');
-        try {
-          const { data, error } = await sb
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          console.log('[R8] Direct query:', data, error);
-          if (!error && data) profile = data;
-        } catch(e) {
-          console.error('[R8] Direct query exception:', e);
-        }
-      }
-
-      clearTimeout(timeout);
-      hideLoad();
-      console.log('[R8] Profile:', profile);
-
-      if (!profile) {
-        // Cria perfil se não existe
-        try {
-          const { data, error } = await sb.from('profiles').upsert({
+      if (!error && data) {
+        profile = data;
+      } else {
+        console.error('[R8] Profile error:', error);
+        // Cria perfil se não existe (novo usuário)
+        const { data: newP } = await sb
+          .from('profiles')
+          .upsert({
             id: session.user.id,
             full_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
             username: session.user.email.split('@')[0],
@@ -519,40 +506,40 @@ sb.auth.onAuthStateChange(async (event, session) => {
             status: 'pending',
             color: '#534AB7',
             planos: {plan:false, proto:false, ment:false}
-          }).select().single();
-          if (!error && data) profile = data;
-        } catch(e) { console.error('[R8] Upsert error:', e); }
+          })
+          .select()
+          .single();
+        if(newP) profile = newP;
       }
-
-      if (!profile) {
-        toast('Erro ao carregar perfil.', 'ti-alert-circle');
-        await sb.auth.signOut();
-        showScreen('scLogin');
-        return;
-      }
-
-      if (profile.status === 'blocked') {
-        toast('Conta bloqueada.', 'ti-ban');
-        await sb.auth.signOut();
-        showScreen('scLogin');
-        return;
-      }
-
-      if (profile.status === 'pending') {
-        document.getElementById('pName').textContent = (profile.full_name||'') + ' (' + session.user.email + ')';
-        showScreen('scPend');
-        return;
-      }
-
-      enterHub(profile);
-
     } catch(e) {
-      clearTimeout(timeout);
-      hideLoad();
-      console.error('[R8] Auth flow error:', e);
-      toast('Erro inesperado. Tente novamente.', 'ti-alert-circle');
-      showScreen('scLogin');
+      console.error('[R8] Profile exception:', e);
     }
+
+    if(done) return; // timeout já disparou
+    done = true;
+    clearTimeout(timeout);
+    hideLoad();
+
+    console.log('[R8] Final profile:', profile);
+
+    if(!profile) {
+      toast('Perfil não encontrado. Contate o administrador.', 'ti-alert-circle');
+      showScreen('scLogin');
+      await sb.auth.signOut();
+      return;
+    }
+    if(profile.status === 'blocked') {
+      toast('Conta bloqueada. Contate o administrador.', 'ti-ban');
+      showScreen('scLogin');
+      await sb.auth.signOut();
+      return;
+    }
+    if(profile.status === 'pending') {
+      document.getElementById('pName').textContent = (profile.full_name||'') + ' (' + session.user.email + ')';
+      showScreen('scPend');
+      return;
+    }
+    enterHub(profile);
   }
 
   if (event === 'SIGNED_OUT') {
