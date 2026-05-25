@@ -458,50 +458,53 @@ function waPrev(){const n=(document.getElementById('waInp').value||'').replace(/
 function waSave(){const n=(document.getElementById('waInp').value||'').replace(/\D/g,'');if(n.length<10){alert('Número inválido.');return;}localStorage.setItem(WK,n);document.getElementById('waPanel').classList.remove('open');toast('WhatsApp salvo!');}
 function initWa(){if(CU&&CU.role==='admin'){const b=document.getElementById('waAdm');if(b)b.style.display='flex';}document.addEventListener('click',function(e){const p=document.getElementById('waPanel'),btn=document.getElementById('waBtn');if(p&&btn&&!btn.contains(e.target))p.classList.remove('open');});}
 
-// ── AUTH STATE LISTENER (estável) ───────────────
+// ── AUTH STATE LISTENER (estável, sem loop) ─────
 let authInitialized = false;
+let authProcessing = false;
 
 sb.auth.onAuthStateChange(async (event, session) => {
   console.log('[R8] AUTH EVENT:', event, '| user:', session?.user?.id || 'none');
 
-  // INITIAL_SESSION — restauração automática ao carregar página
-  if (event === 'INITIAL_SESSION') {
-    authInitialized = true;
-    if (!session) {
-      hideLoad();
-      showScreen('scLogin');
-      return;
-    }
-    await handleSession(session);
-    return;
-  }
-
-  // SIGNED_IN — login manual
-  if (event === 'SIGNED_IN') {
-    await handleSession(session);
-    return;
-  }
-
-  // TOKEN_REFRESHED — NÃO redireciona, apenas atualiza CU silenciosamente
   if (event === 'TOKEN_REFRESHED') {
-    console.log('[R8] Token refreshed silenciosamente');
+    console.log('[R8] Token refreshed — ignorando');
     return;
   }
 
-  // SIGNED_OUT — redireciona para login
   if (event === 'SIGNED_OUT') {
     CU = null;
+    authProcessing = false;
     showScreen('scLogin');
     return;
   }
 
-  // PASSWORD_RECOVERY
   if (event === 'PASSWORD_RECOVERY') {
-    const newPass = prompt('Digite sua nova senha (mínimo 6 caracteres):');
+    const newPass = prompt('Nova senha (mín. 6 caracteres):');
     if (newPass && newPass.length >= 6) {
       await sb.auth.updateUser({ password: newPass });
       toast('Senha atualizada!', 'ti-check');
     }
+    return;
+  }
+
+  // INITIAL_SESSION ou SIGNED_IN — processa apenas UMA vez por vez
+  if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+    if (authProcessing) {
+      console.log('[R8] Já processando auth — ignorando evento duplicado');
+      return;
+    }
+    authProcessing = true;
+    authInitialized = true;
+
+    if (!session) {
+      hideLoad();
+      authProcessing = false;
+      showScreen('scLogin');
+      return;
+    }
+
+    await handleSession(session);
+    authProcessing = false;
+    return;
   }
 });
 
