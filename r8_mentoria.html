@@ -3,46 +3,57 @@
 <head>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-(function(){
+(function() {
   var MID = 'ment';
-  var sb = supabase.createClient('https://uofgfvwghbhapimepwng.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvZmdmdndnaGJoYXBpbWVwd25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2Njg3ODQsImV4cCI6MjA5NTI0NDc4NH0.RZhrt16AIwIg3PDT3n38q4tSvG6jhoppQb-_-Omw358');
+  var sb = window.supabase.createClient('https://uofgfvwghbhapimepwng.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvZmdmdndnaGJoYXBpbWVwd25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2Njg3ODQsImV4cCI6MjA5NTI0NDc4NH0.RZhrt16AIwIg3PDT3n38q4tSvG6jhoppQb-_-Omw358');
 
-  async function init(){
-    // Supabase restaura sessão automaticamente — apenas valida
+  async function init() {
+    console.log('[R8-MOD] Iniciando módulo:', MID);
+
+    // Pega sessão persistida pelo Supabase Auth
     var session = null;
-    try{
+    try {
       var result = await sb.auth.getSession();
       session = result.data.session;
-    }catch(e){ location.replace('index.html'); return; }
-
-    if(!session){ location.replace('index.html'); return; }
-
-    // Carrega perfil
-    var profile = null;
-    try{
-      // Tenta RPC primeiro
-      var rpc = await sb.rpc('get_my_profile');
-      if(rpc.data) profile = typeof rpc.data==='string' ? JSON.parse(rpc.data) : rpc.data;
-    }catch(e){}
-
-    // Fallback: query direta
-    if(!profile){
-      try{
-        var q = await sb.from('profiles').select('*').eq('id', session.user.id).single();
-        if(q.data) profile = q.data;
-      }catch(e){}
+      console.log('[R8-MOD] Session:', session ? session.user.id : 'null');
+    } catch(e) {
+      console.error('[R8-MOD] getSession error:', e);
     }
 
-    if(!profile || profile.status !== 'approved'){
-      location.replace('index.html'); return;
+    if (!session) {
+      console.log('[R8-MOD] Sem sessão — redirecionando para login');
+      location.replace('index.html');
+      return;
+    }
+
+    // Carrega profile diretamente da tabela
+    var profile = null;
+    try {
+      var q = await sb
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
+
+      console.log('[R8-MOD] Profile:', q.data, q.error);
+
+      if (!q.error && q.data) profile = q.data;
+    } catch(e) {
+      console.error('[R8-MOD] Profile error:', e);
+    }
+
+    if (!profile || profile.status !== 'approved') {
+      console.log('[R8-MOD] Profile inválido:', profile?.status);
+      location.replace('index.html');
+      return;
     }
 
     // Verifica permissão do módulo
-    if(profile.role !== 'admin'){
+    if (profile.role !== 'admin') {
       var pl = profile.planos || {};
-      if(!pl[MID]){
+      if (!pl[MID]) {
         document.body.style = 'margin:0;background:#0f1d35;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:Inter,sans-serif';
-        document.body.innerHTML = '<div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:2.5rem;max-width:400px;text-align:center;color:#fff"><div style="font-size:48px;margin-bottom:1rem">⛔</div><div style="font-family:Syne,sans-serif;font-size:20px;font-weight:700;margin-bottom:.5rem">Sem permissão</div><div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:1.5rem">Este módulo não está no seu plano.</div><a href=\"index.html\" style=\"display:inline-flex;align-items:center;gap:8px;padding:11px 24px;background:#c9a84c;border-radius:10px;color:#0f1d35;font-weight:700;text-decoration:none;font-size:14px\">← Voltar ao Hub</a></div>';
+        document.body.innerHTML = '<div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:2.5rem;max-width:400px;text-align:center;color:#fff"><div style="font-size:48px;margin-bottom:1rem">⛔</div><div style="font-family:Syne,sans-serif;font-size:20px;font-weight:700;margin-bottom:.5rem">Sem permissão</div><div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:1.5rem">Este módulo não está no seu plano. Solicite ao administrador.</div><a href=\"index.html\" style=\"padding:11px 24px;background:#c9a84c;border-radius:10px;color:#0f1d35;font-weight:700;text-decoration:none;font-size:14px\">← Voltar ao Hub</a></div>';
         return;
       }
     }
@@ -51,31 +62,38 @@
     window.R8_USER = profile;
     window.R8_MODULE_ID = MID;
     window.R8_SB = sb;
+    console.log('[R8-MOD] Auth OK:', profile.full_name, profile.role);
 
-    function applyBadge(){
-      var b=document.getElementById('userBadge');
-      var a=document.getElementById('badgeAv');
-      var n=document.getElementById('badgeName');
-      if(b) b.style.display='flex';
-      if(a){
-        var nm=profile.full_name||'?';
-        a.textContent=nm.split(' ').slice(0,2).map(function(w){return w[0]||''}).join('').toUpperCase()||'?';
-        a.style.background=profile.color||'#534AB7';
+    function applyBadge() {
+      var b = document.getElementById('userBadge');
+      var a = document.getElementById('badgeAv');
+      var n = document.getElementById('badgeName');
+      if (b) b.style.display = 'flex';
+      if (a) {
+        var nm = profile.full_name || '?';
+        a.textContent = nm.split(' ').slice(0,2).map(function(w) { return w[0] || ''; }).join('').toUpperCase() || '?';
+        a.style.background = profile.color || '#534AB7';
       }
-      if(n) n.textContent=(profile.full_name||'').split(' ')[0];
-      if(profile.role==='admin') document.querySelectorAll('[data-admin-only]').forEach(function(el){el.style.display='';});
+      if (n) n.textContent = (profile.full_name || '').split(' ')[0];
+      if (profile.role === 'admin') {
+        document.querySelectorAll('[data-admin-only]').forEach(function(el) { el.style.display = ''; });
+      }
     }
 
-    if(document.readyState==='loading'){
+    if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', applyBadge);
-    }else{
+    } else {
       applyBadge();
     }
   }
 
-  init().catch(function(e){ console.error('Auth error:', e); location.replace('index.html'); });
+  init().catch(function(e) {
+    console.error('[R8-MOD] Fatal error:', e);
+    location.replace('index.html');
+  });
 })();
 </script>
+
 
 
 

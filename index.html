@@ -458,95 +458,44 @@ function waPrev(){const n=(document.getElementById('waInp').value||'').replace(/
 function waSave(){const n=(document.getElementById('waInp').value||'').replace(/\D/g,'');if(n.length<10){alert('Número inválido.');return;}localStorage.setItem(WK,n);document.getElementById('waPanel').classList.remove('open');toast('WhatsApp salvo!');}
 function initWa(){if(CU&&CU.role==='admin'){const b=document.getElementById('waAdm');if(b)b.style.display='flex';}document.addEventListener('click',function(e){const p=document.getElementById('waPanel'),btn=document.getElementById('waBtn');if(p&&btn&&!btn.contains(e.target))p.classList.remove('open');});}
 
-// ── AUTH STATE LISTENER ──────────────────────────
+// ── AUTH STATE LISTENER (estável) ───────────────
+let authInitialized = false;
+
 sb.auth.onAuthStateChange(async (event, session) => {
-  console.log('[R8] Auth event:', event, session?.user?.id);
+  console.log('[R8] AUTH EVENT:', event, '| user:', session?.user?.id || 'none');
 
-  if(event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-    showLoad('Carregando perfil...');
-    console.log('[R8] Auth event:', event, 'user:', session.user.id);
-
-    let profile = null;
-    let done = false;
-
-    // Timeout absoluto — 8 segundos
-    const timeout = setTimeout(() => {
-      if(done) return;
-      done = true;
+  // INITIAL_SESSION — restauração automática ao carregar página
+  if (event === 'INITIAL_SESSION') {
+    authInitialized = true;
+    if (!session) {
       hideLoad();
-      console.error('[R8] TIMEOUT — profile nunca resolveu');
-      document.getElementById('lErr').textContent = 'Erro ao carregar perfil. Tente novamente.';
       showScreen('scLogin');
-      sb.auth.signOut();
-    }, 8000);
-
-    try {
-      // PRINCIPAL: query direta na tabela profiles
-      console.log('[R8] Buscando profile para:', session.user.id);
-      const { data, error } = await sb
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single();
-
-      console.log('[R8] Profile query result:', data, error);
-
-      if (!error && data) {
-        profile = data;
-      } else {
-        console.error('[R8] Profile error:', error);
-        // Cria perfil se não existe (novo usuário)
-        const { data: newP } = await sb
-          .from('profiles')
-          .upsert({
-            id: session.user.id,
-            full_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
-            username: session.user.email.split('@')[0],
-            role: 'aluno',
-            status: 'pending',
-            color: '#534AB7',
-            planos: {plan:false, proto:false, ment:false}
-          })
-          .select()
-          .single();
-        if(newP) profile = newP;
-      }
-    } catch(e) {
-      console.error('[R8] Profile exception:', e);
-    }
-
-    if(done) return; // timeout já disparou
-    done = true;
-    clearTimeout(timeout);
-    hideLoad();
-
-    console.log('[R8] Final profile:', profile);
-
-    if(!profile) {
-      toast('Perfil não encontrado. Contate o administrador.', 'ti-alert-circle');
-      showScreen('scLogin');
-      await sb.auth.signOut();
       return;
     }
-    if(profile.status === 'blocked') {
-      toast('Conta bloqueada. Contate o administrador.', 'ti-ban');
-      showScreen('scLogin');
-      await sb.auth.signOut();
-      return;
-    }
-    if(profile.status === 'pending') {
-      document.getElementById('pName').textContent = (profile.full_name||'') + ' (' + session.user.email + ')';
-      showScreen('scPend');
-      return;
-    }
-    enterHub(profile);
+    await handleSession(session);
+    return;
   }
 
+  // SIGNED_IN — login manual
+  if (event === 'SIGNED_IN') {
+    await handleSession(session);
+    return;
+  }
+
+  // TOKEN_REFRESHED — NÃO redireciona, apenas atualiza CU silenciosamente
+  if (event === 'TOKEN_REFRESHED') {
+    console.log('[R8] Token refreshed silenciosamente');
+    return;
+  }
+
+  // SIGNED_OUT — redireciona para login
   if (event === 'SIGNED_OUT') {
     CU = null;
     showScreen('scLogin');
+    return;
   }
 
+  // PASSWORD_RECOVERY
   if (event === 'PASSWORD_RECOVERY') {
     const newPass = prompt('Digite sua nova senha (mínimo 6 caracteres):');
     if (newPass && newPass.length >= 6) {
@@ -556,23 +505,85 @@ sb.auth.onAuthStateChange(async (event, session) => {
   }
 });
 
-// ── INIT ──────────────────────────────────────────
-(async() => {
-  showScreen('scLogin');
-  console.log('[R8] Init - checking session...');
+async function handleSession(session) {
+  showLoad('Carregando perfil...');
+  console.log('[R8] Carregando profile para:', session.user.id);
+
+  let profile = null;
+
   try {
-    const { data: { session }, error } = await sb.auth.getSession();
-    console.log('[R8] Existing session:', session?.user?.id, error);
-    // onAuthStateChange vai disparar SIGNED_IN automaticamente se sessão existir
-    if (!session) {
-      hideLoad();
-      console.log('[R8] No session - showing login');
+    const { data, error } = await sb
+      .from('profiles')
+      .select('*')
+      .eq('id', session.user.id)
+      .single();
+
+    console.log('[R8] Profile:', data, '| Error:', error);
+
+    if (!error && data) {
+      profile = data;
+    } else {
+      // Cria perfil se não existe
+      const meta = session.user.user_metadata || {};
+      const { data: created } = await sb
+        .from('profiles')
+        .upsert({
+          id: session.user.id,
+          full_name: meta.full_name || session.user.email.split('@')[0],
+          username: session.user.email.split('@')[0],
+          role: 'aluno',
+          status: 'pending',
+          color: '#534AB7',
+          planos: {plan:false, proto:false, ment:false}
+        })
+        .select()
+        .single();
+      if (created) profile = created;
     }
   } catch(e) {
-    hideLoad();
-    console.error('[R8] Init error:', e);
+    console.error('[R8] Profile load error:', e);
   }
+
+  hideLoad();
+
+  if (!profile) {
+    toast('Erro ao carregar perfil.', 'ti-alert-circle');
+    showScreen('scLogin');
+    return;
+  }
+
+  console.log('[R8] Profile OK:', profile.role, profile.status);
+
+  if (profile.status === 'blocked') {
+    toast('Conta bloqueada. Contate o administrador.', 'ti-ban');
+    await sb.auth.signOut();
+    return;
+  }
+
+  if (profile.status === 'pending') {
+    document.getElementById('pName').textContent =
+      (profile.full_name || '') + ' (' + session.user.email + ')';
+    showScreen('scPend');
+    return;
+  }
+
+  enterHub(profile);
+}
+
+// ── INIT ─────────────────────────────────────────
+// onAuthStateChange com INITIAL_SESSION cuida de tudo
+// Não precisa de getSession() separado
+(async () => {
+  showScreen('scLogin');
+  // Fallback: se INITIAL_SESSION não disparar em 5s, esconde o loading
+  setTimeout(() => {
+    if (!authInitialized) {
+      hideLoad();
+      console.warn('[R8] INITIAL_SESSION não disparou — mostrando login');
+    }
+  }, 5000);
 })();
+
 </script>
 </body>
 </html>
