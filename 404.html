@@ -290,9 +290,23 @@ async function doSendReset(){
 
 // ── CARREGA PERFIL ────────────────────────────────
 async function loadProfile(userId){
-  const { data, error } = await sb.rpc('get_my_profile');
-  if(error||!data) return null;
-  return typeof data === 'string' ? JSON.parse(data) : data;
+  // Try RPC first
+  try{
+    const { data, error } = await sb.rpc('get_my_profile');
+    if(!error && data){
+      return typeof data === 'string' ? JSON.parse(data) : data;
+    }
+  }catch(e){}
+  // Fallback: direct table query
+  try{
+    const { data, error } = await sb
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    if(!error && data) return data;
+  }catch(e){}
+  return null;
 }
 
 // ── ENTRA NO HUB ─────────────────────────────────
@@ -454,9 +468,31 @@ function initWa(){if(CU&&CU.role==='admin'){const b=document.getElementById('waA
 sb.auth.onAuthStateChange(async (event, session) => {
   if(event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED'){
     showLoad('Carregando perfil...');
-    const profile = await loadProfile(session.user.id);
+    let profile = null;
+    try{
+      profile = await loadProfile(session.user.id);
+    }catch(e){
+      console.error('loadProfile error:', e);
+    }
     hideLoad();
-    if(!profile){ toast('Perfil não encontrado.','ti-alert-circle'); await sb.auth.signOut(); showScreen('scLogin'); return; }
+    if(!profile){
+      // Profile not found but user is authenticated - create minimal profile
+      toast('Bem-vindo! Configurando perfil...','ti-settings');
+      // Try to insert profile if missing
+      try{
+        await sb.from('profiles').upsert({
+          id: session.user.id,
+          full_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
+          username: session.user.email.split('@')[0],
+          role: 'aluno',
+          status: 'pending',
+          color: '#534AB7',
+          planos: {plan:false,proto:false,ment:false}
+        });
+        profile = await loadProfile(session.user.id);
+      }catch(e){ console.error('upsert error:', e); }
+    }
+    if(!profile){ toast('Erro ao carregar perfil. Tente novamente.','ti-alert-circle'); await sb.auth.signOut(); showScreen('scLogin'); return; }
     if(profile.status === 'blocked'){ toast('Conta bloqueada.','ti-ban'); await sb.auth.signOut(); showScreen('scLogin'); return; }
     if(profile.status === 'pending'){ document.getElementById('pName').textContent=(profile.full_name||'')+' ('+session.user.email+')'; hideLoad(); showScreen('scPend'); return; }
     enterHub(profile);
