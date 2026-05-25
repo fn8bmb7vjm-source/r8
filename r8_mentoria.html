@@ -1,39 +1,60 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 (function(){
   var MID = 'ment';
-  var KEY = 'r8_session';
+  var SB_URL = 'https://uofgfvwghbhapimepwng.supabase.co';
+  var SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvZmdmdndnaGJoYXBpbWVwd25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2Njg3ODQsImV4cCI6MjA5NTI0NDc4NH0.RZhrt16AIwIg3PDT3n38q4tSvG6jhoppQb-_-Omw358';
 
-  function run(){
-    var user = null;
+  var sb = supabase.createClient(SB_URL, SB_ANON);
 
-    // 1. URL param ?u= (passed by hub via window.location.href)
+  async function init(){
+    var token = null;
+
+    // 1. Pega token da URL
     try{
-      var up = new URLSearchParams(location.search).get('u');
-      if(up && up.length > 10){
-        user = JSON.parse(atob(up));
-        localStorage.setItem(KEY, JSON.stringify({user:user, ts:Date.now()}));
-        history.replaceState({},'',location.pathname);
+      var params = new URLSearchParams(location.search);
+      token = params.get('token');
+      if(token){
+        // Limpa URL sem recarregar
+        history.replaceState({}, '', location.pathname);
+        // Seta sessão com o token recebido
+        await sb.auth.setSession({
+          access_token: token,
+          refresh_token: token // Supabase irá validar
+        });
       }
     }catch(e){}
 
-    // 2. localStorage fallback
-    if(!user){
-      try{
-        var s = JSON.parse(localStorage.getItem(KEY)||'null');
-        if(s && s.user && (Date.now()-s.ts) < 7*24*3600*1000) user = s.user;
-      }catch(e){}
+    // 2. Pega sessão atual (token da URL ou sessão salva)
+    var session = null;
+    try{
+      var result = await sb.auth.getSession();
+      session = result.data.session;
+    }catch(e){}
+
+    if(!session){
+      location.replace('index.html');
+      return;
     }
 
-    // 3. Not logged in
-    if(!user){ location.replace('index.html'); return; }
-    if(user.status !== 'approved'){ location.replace('index.html'); return; }
+    // 3. Carrega perfil via RPC
+    var profile = null;
+    try{
+      var rpc = await sb.rpc('get_my_profile');
+      profile = rpc.data ? (typeof rpc.data==='string'?JSON.parse(rpc.data):rpc.data) : null;
+    }catch(e){}
 
-    // 4. Check module permission
-    if(user.role !== 'admin'){
-      var pl = user.planos || {};
+    if(!profile || profile.status !== 'approved'){
+      location.replace('index.html');
+      return;
+    }
+
+    // 4. Verifica permissão do módulo
+    if(profile.role !== 'admin'){
+      var pl = profile.planos || {};
       if(!pl[MID]){
         document.body.style = 'margin:0;background:#0f1d35;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:Inter,sans-serif';
         document.body.innerHTML = '<div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:2.5rem;max-width:400px;text-align:center;color:#fff"><div style="font-size:48px;margin-bottom:1rem">⛔</div><div style="font-family:Syne,sans-serif;font-size:20px;font-weight:700;margin-bottom:.5rem">Sem permissão</div><div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:1.5rem">Este módulo não está no seu plano.</div><a href=\"index.html\" style=\"display:inline-flex;align-items:center;gap:8px;padding:11px 24px;background:#c9a84c;border-radius:10px;color:#0f1d35;font-weight:700;text-decoration:none;font-size:14px\">← Voltar ao Hub</a></div>';
@@ -41,24 +62,25 @@
       }
     }
 
-    // 5. Auth OK
-    window.R8_USER = user;
+    // 5. Auth OK — expõe usuário globalmente
+    window.R8_USER = profile;
     window.R8_MODULE_ID = MID;
+    window.R8_SESSION = session;
 
+    // 6. Aplica badge
     function applyBadge(){
       var b=document.getElementById('userBadge');
       var a=document.getElementById('badgeAv');
       var n=document.getElementById('badgeName');
       if(b) b.style.display='flex';
       if(a){
-        var nm=user.name||'?';
+        var nm=profile.full_name||'?';
         a.textContent=nm.split(' ').slice(0,2).map(function(w){return w[0]||''}).join('').toUpperCase()||'?';
-        a.style.background=user.color||'#534AB7';
+        a.style.background=profile.color||'#534AB7';
       }
-      if(n) n.textContent=(user.name||'').split(' ')[0];
-      if(user.role==='admin') document.querySelectorAll('[data-admin-only]').forEach(function(el){el.style.display='';});
+      if(n) n.textContent=(profile.full_name||'').split(' ')[0];
+      if(profile.role==='admin') document.querySelectorAll('[data-admin-only]').forEach(function(el){el.style.display='';});
     }
-
     if(document.readyState==='loading'){
       document.addEventListener('DOMContentLoaded', applyBadge);
     } else {
@@ -66,9 +88,10 @@
     }
   }
 
-  run();
+  init().catch(function(){ location.replace('index.html'); });
 })();
 </script>
+
 
 
 <meta charset="UTF-8"/>

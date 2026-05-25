@@ -6,9 +6,8 @@
 <title>R8-Concursos · Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css"/>
-<!-- Firebase compat SDK (works without type=module) -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 :root{--navy:#1a2c4e;--navy2:#243d6b;--dark:#0f1d35;--gold:#c9a84c;--goldl:#f0d080;--bg:#f4f7fb;--surf:#fff;--surf2:#f0f4fa;--bord:#d8e2f0;--txt:#0f1d35;--txt2:#4a5a72;--txt3:#8a9bb8;--grn:#1D9E75;--red:#A32D2D;--r:10px;--rl:16px}
 *{box-sizing:border-box;margin:0;padding:0}body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
@@ -27,6 +26,7 @@
 .lbtn{width:100%;padding:13px;background:var(--gold);border:none;border-radius:10px;color:var(--dark);font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-top:.5rem;letter-spacing:.04em;transition:all .2s}.lbtn:hover{background:var(--goldl)}
 .lbtn:disabled{opacity:.6;cursor:not-allowed}
 .lerr{font-size:13px;color:#f87171;text-align:center;min-height:20px;margin-top:.5rem;padding:4px}
+.lforgot{text-align:center;margin-top:.75rem}.lforgot a{font-size:12px;color:rgba(255,255,255,.4);cursor:pointer;text-decoration:none}.lforgot a:hover{color:var(--gold)}
 #scPend{align-items:center;justify-content:center;background:var(--dark)}
 .pcard{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:2.5rem;max-width:440px;text-align:center;color:#fff}
 .picon{font-size:52px;color:var(--gold);margin-bottom:1rem}
@@ -101,7 +101,7 @@
 .sep{height:1px;background:var(--bord);margin:14px 0}
 .empty{font-size:14px;color:var(--txt3);text-align:center;padding:2rem;background:var(--surf2);border-radius:var(--rl);border:1.5px dashed var(--bord)}
 .fl{display:flex;flex-direction:column;gap:6px}.lb{font-size:12px;font-weight:600;color:var(--txt2)}
-input[type=text],input[type=password],select{width:100%;font-size:14px;padding:10px 13px;border-radius:var(--r);border:1px solid var(--bord);background:var(--surf2);color:var(--txt);font-family:'Inter',sans-serif;outline:none;transition:border .2s}
+input[type=text],input[type=email],input[type=password],select{width:100%;font-size:14px;padding:10px 13px;border-radius:var(--r);border:1px solid var(--bord);background:var(--surf2);color:var(--txt);font-family:'Inter',sans-serif;outline:none;transition:border .2s}
 input:focus,select:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(26,44,78,.1)}
 .mov{display:none;position:fixed;inset:0;background:rgba(10,20,40,.55);z-index:999;align-items:center;justify-content:center;backdrop-filter:blur(3px)}.mov.open{display:flex}
 .modal{background:#fff;border-radius:18px;padding:2rem;width:500px;max-width:95vw;border:1px solid var(--bord)}
@@ -117,7 +117,7 @@ input:focus,select:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(26,4
 .wa-bub{background:#25D366;width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 16px rgba(37,211,102,.45);transition:all .2s;border:none;text-decoration:none;animation:wap 2.5s infinite;position:relative}.wa-bub:hover{transform:scale(1.1)}
 .wa-bub svg{width:26px;height:26px;fill:#fff}
 @keyframes wap{0%,100%{box-shadow:0 4px 16px rgba(37,211,102,.45)}50%{box-shadow:0 4px 28px rgba(37,211,102,.75),0 0 0 8px rgba(37,211,102,.1)}}
-.wa-tip{background:#fff;color:#0f1d35;font-size:13px;font-weight:600;padding:8px 14px;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.12);white-space:nowrap;display:none;border:1px solid var(--bord);font-family:'Inter',sans-serif}
+.wa-tip{background:#fff;color:#0f1d35;font-size:13px;font-weight:600;padding:8px 14px;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.12);white-space:nowrap;display:none;border:1px solid var(--bord)}
 .wa-btn:hover .wa-tip{display:block}
 .wa-adm{position:absolute;top:-3px;right:-3px;width:18px;height:18px;background:#1a2c4e;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;border:2px solid #25D366;cursor:pointer}
 .wa-pan{display:none;background:#fff;border-radius:14px;padding:1rem;box-shadow:0 8px 32px rgba(0,0,0,.15);border:1px solid var(--bord);width:280px;margin-bottom:4px}.wa-pan.open{display:block}
@@ -138,15 +138,16 @@ input:focus,select:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(26,4
     <div class="llogo"><img src="data:image/jpeg;base64,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KQAAAAKQAAAAKQAAAAKQAAAAKQAAAAKQAAAAKQAUEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAUAQpAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApABQQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABQBCkAAAACkAAAACkAAAACkAAAACkAAAACkAAAACkAAAACkAAAACkAAAACkAAAACkAAAACkAAAACkAAAACkAAAACkAAAACkAFBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFAEKQAAAAKQAAAAKQAAAAKQAAAAKQAAAAKQAAAAKQAAAAKQAAAAKQAAAAKQAAAAKQAAAAKQAAAAKQAAAAKQAAAAKQAAAAKQAUEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAUAQpAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApABQQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH/2Q==" alt="R8"/><div class="lbrand">R8-CONCURSOS</div><div class="ltag">Seu nome no Diário Oficial começa aqui</div></div>
     <div class="ltabs"><button class="ltab on" onclick="tab('login')">Entrar</button><button class="ltab" onclick="tab('reg')">Criar conta</button></div>
     <div id="fLogin">
-      <div class="lf"><label>Usuário</label><input type="text" id="lU" placeholder="Seu usuário" autocomplete="username"/></div>
-      <div class="lf"><label>Senha</label><input type="password" id="lP" placeholder="Sua senha" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+      <div class="lf"><label>E-mail</label><input type="email" id="lEmail" placeholder="seu@email.com" autocomplete="email"/></div>
+      <div class="lf"><label>Senha</label><input type="password" id="lPass" placeholder="Sua senha" onkeydown="if(event.key==='Enter')doLogin()"/></div>
       <div class="lerr" id="lErr"></div>
       <button class="lbtn" onclick="doLogin()"><i class="ti ti-login" style="font-size:14px;vertical-align:-2px"></i> Entrar</button>
+      <div class="lforgot"><a onclick="doForgot()">Esqueci minha senha</a></div>
     </div>
     <div id="fReg" style="display:none">
-      <div class="lf"><label>Nome completo</label><input type="text" id="rN" placeholder="Seu nome"/></div>
-      <div class="lf"><label>Usuário</label><input type="text" id="rU" placeholder="Escolha um usuário"/></div>
-      <div class="lf"><label>Senha</label><input type="password" id="rP" placeholder="Crie uma senha" onkeydown="if(event.key==='Enter')doRegister()"/></div>
+      <div class="lf"><label>Nome completo</label><input type="text" id="rName" placeholder="Seu nome completo"/></div>
+      <div class="lf"><label>E-mail</label><input type="email" id="rEmail" placeholder="seu@email.com"/></div>
+      <div class="lf"><label>Senha</label><input type="password" id="rPass" placeholder="Mínimo 6 caracteres" onkeydown="if(event.key==='Enter')doRegister()"/></div>
       <div class="lerr" id="rErr"></div>
       <button class="lbtn" onclick="doRegister()"><i class="ti ti-user-plus" style="font-size:14px;vertical-align:-2px"></i> Solicitar acesso</button>
     </div>
@@ -155,7 +156,7 @@ input:focus,select:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(26,4
 
 <!-- PENDING -->
 <div class="screen" id="scPend">
-  <div class="pcard"><div class="picon"><i class="ti ti-hourglass"></i></div><div class="ptitle">Aguardando aprovação</div><div class="pname" id="pName"></div><div class="pmsg">Solicitação enviada! O administrador precisa aprovar seu acesso.</div><button class="pbtn" onclick="showScreen('scLogin')"><i class="ti ti-arrow-left"></i> Voltar</button></div>
+  <div class="pcard"><div class="picon"><i class="ti ti-hourglass"></i></div><div class="ptitle">Aguardando aprovação</div><div class="pname" id="pName"></div><div class="pmsg">Conta criada! O administrador precisa aprovar seu acesso. Você receberá acesso assim que aprovado.</div><button class="pbtn" onclick="doLogout()"><i class="ti ti-arrow-left"></i> Voltar</button></div>
 </div>
 
 <!-- HUB -->
@@ -184,8 +185,8 @@ input:focus,select:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(26,4
 </div>
 
 <!-- MODALS -->
-<div class="mov" id="mNew"><div class="modal"><div class="modal-t"><i class="ti ti-user-plus"></i> Adicionar usuário</div><div class="fl" style="margin-bottom:12px"><label class="lb">Nome completo</label><input type="text" id="mnN" placeholder="Nome"/></div><div class="fl" style="margin-bottom:12px"><label class="lb">Usuário</label><input type="text" id="mnU" placeholder="Login"/></div><div class="fl" style="margin-bottom:12px"><label class="lb">Senha</label><input type="password" id="mnP" placeholder="Senha"/></div><div class="fl" style="margin-bottom:12px"><label class="lb">Perfil</label><select id="mnR"><option value="aluno">Aluno</option><option value="admin">Administrador</option></select></div><div class="fl"><label class="lb" style="margin-bottom:8px">Módulos</label><div style="display:flex;flex-direction:column;gap:8px"><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="mnM1" checked style="width:16px;height:16px"/> Planejamento</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="mnM2" style="width:16px;height:16px"/> Protocolo 45 Dias</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="mnM3" style="width:16px;height:16px"/> Mentoria</label></div></div><div id="mnErr" style="font-size:12px;color:var(--red);margin-top:8px;min-height:16px"></div><div class="mac"><button class="btn btn-gh" onclick="closeM('mNew')">Cancelar</button><button class="btn btn-pr" onclick="admCreate()"><i class="ti ti-check"></i> Criar</button></div></div></div>
-<div class="mov" id="mReset"><div class="modal"><div class="modal-t"><i class="ti ti-key"></i> Redefinir senha</div><p style="font-size:14px;color:var(--txt2);margin-bottom:1rem">Usuário: <strong id="resetLbl"></strong></p><div class="fl"><label class="lb">Nova senha</label><input type="password" id="resetP" placeholder="Nova senha"/></div><div class="mac"><button class="btn btn-gh" onclick="closeM('mReset')">Cancelar</button><button class="btn btn-pr" onclick="doReset()"><i class="ti ti-check"></i> Salvar</button></div></div></div>
+<div class="mov" id="mNew"><div class="modal"><div class="modal-t"><i class="ti ti-user-plus"></i> Adicionar usuário</div><div class="fl" style="margin-bottom:12px"><label class="lb">Nome completo</label><input type="text" id="mnName" placeholder="Nome"/></div><div class="fl" style="margin-bottom:12px"><label class="lb">E-mail</label><input type="email" id="mnEmail" placeholder="email@exemplo.com"/></div><div class="fl" style="margin-bottom:12px"><label class="lb">Senha inicial</label><input type="password" id="mnPass" placeholder="Mínimo 6 caracteres"/></div><div class="fl" style="margin-bottom:12px"><label class="lb">Perfil</label><select id="mnRole"><option value="aluno">Aluno</option><option value="admin">Administrador</option></select></div><div class="fl"><label class="lb" style="margin-bottom:8px">Módulos liberados</label><div style="display:flex;flex-direction:column;gap:8px"><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="mnM1" checked style="width:16px;height:16px"/> Planejamento</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="mnM2" style="width:16px;height:16px"/> Protocolo 45 Dias</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="mnM3" style="width:16px;height:16px"/> Mentoria</label></div></div><div id="mnErr" style="font-size:12px;color:var(--red);margin-top:8px;min-height:16px"></div><div class="mac"><button class="btn btn-gh" onclick="closeM('mNew')">Cancelar</button><button class="btn btn-pr" onclick="admCreate()"><i class="ti ti-check"></i> Criar</button></div></div></div>
+<div class="mov" id="mReset"><div class="modal"><div class="modal-t"><i class="ti ti-key"></i> Redefinir senha</div><p style="font-size:14px;color:var(--txt2);margin-bottom:1rem">Enviar link de redefinição para: <strong id="resetEmail"></strong></p><div class="mac"><button class="btn btn-gh" onclick="closeM('mReset')">Cancelar</button><button class="btn btn-pr" onclick="doSendReset()"><i class="ti ti-send"></i> Enviar link</button></div></div></div>
 
 <!-- WHATSAPP -->
 <div class="wa-btn" id="waBtn">
@@ -194,319 +195,292 @@ input:focus,select:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(26,4
 </div>
 
 <script>
-// ═══ FIREBASE INIT (compat SDK - no module scope issues) ═══
-firebase.initializeApp({
-  apiKey: "AIzaSyCPqDz6tqhF0c7EMwYEVBNLcotALCT08Fg",
-  authDomain: "r8concursos.firebaseapp.com",
-  projectId: "r8concursos",
-  storageBucket: "r8concursos.firebasestorage.app",
-  messagingSenderId: "980113913929",
-  appId: "1:980113913929:web:9e86e77e5cdfe6ad90a798"
-});
-var db = firebase.firestore();
+// ═══════════════════════════════════════════════════
+// R8 CONCURSOS — AUTH ENGINE v3.0 (Supabase Auth)
+// ═══════════════════════════════════════════════════
 
-// ═══ CONSTANTS ═══
-var SK = 'r8_session';
-var WK = 'r8_wa';
-var COLORS = ['#534AB7','#1D9E75','#854F0B','#185FA5','#D85A30','#D4537E','#0F6E56','#c9a84c'];
-var MODS = [
+const { createClient } = supabase;
+const sb = createClient('https://uofgfvwghbhapimepwng.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvZmdmdndnaGJoYXBpbWVwd25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2Njg3ODQsImV4cCI6MjA5NTI0NDc4NH0.RZhrt16AIwIg3PDT3n38q4tSvG6jhoppQb-_-Omw358');
+
+const COLORS = ['#534AB7','#1D9E75','#854F0B','#185FA5','#D85A30','#D4537E','#0F6E56','#c9a84c'];
+const WK = 'r8_wa';
+const MODS = [
   {id:'plan',name:'Planejamento Estratégico',ico:'ti-clipboard-list',cls:'plan',icoCls:'ico-plan',btnCls:'btn-plan',tagCls:'tag-plan',tag:'Planejamento',file:'r8_planejamento.html',desc:'Metas diárias, revisões espaçadas, cronômetros, simulados e análise de desempenho.',feats:['Metas diárias automáticas','Revisões em 24h e 7 dias','Cronômetros de estudo','Gráficos de desempenho','Exportação em PDF','Sistema de dificuldades']},
   {id:'proto',name:'Protocolo 45 Dias',ico:'ti-bolt',cls:'proto',icoCls:'ico-proto',btnCls:'btn-proto',tagCls:'tag-proto',tag:'Intensivo',file:'r8_protocolo45.html',desc:'Plano intensivo para a reta final com simulados frequentes e revisões diárias.',feats:['Cronograma dia a dia','Sessões turbo','Revisões relâmpago','Simulados a cada 5 dias','Painel de urgência','Checklist crítico']},
   {id:'ment',name:'Mentoria para Concursos',ico:'ti-users',cls:'ment',icoCls:'ico-ment',btnCls:'btn-ment',tagCls:'tag-ment',tag:'Mentoria',file:'r8_mentoria.html',desc:'Acompanhamento personalizado com trilha individual e orientação estratégica.',feats:['Trilha personalizada','Feedback semanal','Chat com mentor','Materiais exclusivos','Análise de edital','Sessões ao vivo']}
 ];
 
-// ═══ HELPERS ═══
-var CU = null, resetTarget = null;
-function ini(n){ return (n||'?').split(' ').slice(0,2).map(function(w){return w[0]||''}).join('').toUpperCase()||'?'; }
+let CU = null; // current user profile
+let resetEmailTarget = null;
+
+// ── HELPERS ──────────────────────────────────────
+function ini(n){ return (n||'?').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'?'; }
 function rndColor(){ return COLORS[Math.floor(Math.random()*COLORS.length)]; }
-function strColor(s){ var h=0; for(var i=0;i<s.length;i++) h=((h<<5)-h)+s.charCodeAt(i); return COLORS[Math.abs(h)%COLORS.length]; }
-function showScreen(id){ document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('act');}); document.getElementById(id).classList.add('act'); }
-function toast(msg){ var t=document.getElementById('toast'); document.getElementById('toastMsg').textContent=msg; t.classList.add('show'); setTimeout(function(){t.classList.remove('show');},3000); }
+function strColor(s){ let h=0; for(const c of s) h=((h<<5)-h)+c.charCodeAt(0); return COLORS[Math.abs(h)%COLORS.length]; }
+function showScreen(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('act')); document.getElementById(id).classList.add('act'); }
+function toast(msg,ico='ti-check'){ const t=document.getElementById('toast'); document.getElementById('toastMsg').textContent=msg; t.querySelector('i').className='ti '+ico; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3500); }
 function closeM(id){ document.getElementById(id).classList.remove('open'); }
 function showLoad(txt){ document.getElementById('spinTxt').textContent=txt||'Aguarde...'; document.getElementById('loadOv').classList.add('open'); }
 function hideLoad(){ document.getElementById('loadOv').classList.remove('open'); }
-function saveSession(user){ localStorage.setItem(SK, JSON.stringify({user:user, ts:Date.now()})); }
-function loadSession(){ try{ var s=JSON.parse(localStorage.getItem(SK)||'null'); if(s&&s.user&&(Date.now()-s.ts)<7*24*3600*1000) return s.user; }catch(e){} return null; }
-function clearSession(){ localStorage.removeItem(SK); }
-
-// ═══ TAB ═══
 function tab(t){
-  document.getElementById('fLogin').style.display = t==='login'?'':'none';
-  document.getElementById('fReg').style.display = t==='reg'?'':'none';
-  document.querySelectorAll('.ltab').forEach(function(b,i){b.classList.toggle('on',(i===0&&t==='login')||(i===1&&t==='reg'));});
-  ['lErr','rErr'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent='';});
+  document.getElementById('fLogin').style.display=t==='login'?'':'none';
+  document.getElementById('fReg').style.display=t==='reg'?'':'none';
+  document.querySelectorAll('.ltab').forEach((b,i)=>b.classList.toggle('on',(i===0&&t==='login')||(i===1&&t==='reg')));
+  ['lErr','rErr'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=''; });
 }
 
-// ═══ LOGIN ═══
-function doLogin(){
-  var u = document.getElementById('lU').value.trim();
-  var p = document.getElementById('lP').value;
-  var err = document.getElementById('lErr');
-  if(!u||!p){err.textContent='Preencha usuário e senha.';return;}
+// ── AUTH SUPABASE ─────────────────────────────────
+
+async function doLogin(){
+  const email = document.getElementById('lEmail').value.trim();
+  const pass  = document.getElementById('lPass').value;
+  const err   = document.getElementById('lErr');
+  if(!email||!pass){ err.textContent='Preencha e-mail e senha.'; return; }
   showLoad('Verificando...');
-  db.collection('r8_users').where('username','==',u.toLowerCase()).get()
-    .then(function(snap){
-      hideLoad();
-      if(snap.empty){err.textContent='Usuário não encontrado.';return;}
-      var userDoc = snap.docs[0];
-      var user = Object.assign({id:userDoc.id}, userDoc.data());
-      if(user.password !== p){err.textContent='Senha incorreta.';return;}
-      if(user.status==='blocked'){err.textContent='Conta bloqueada. Contate o administrador.';return;}
-      if(user.status==='pending'){
-        document.getElementById('pName').textContent=user.name+' (@'+user.username+')';
-        showScreen('scPend');return;
-      }
-      saveSession(user);
-      CU = user;
-      enterHub();
-    })
-    .catch(function(e){
-      hideLoad();
-      err.textContent='Erro de conexão. Verifique sua internet.';
-      console.error(e);
-    });
+  const { data, error } = await sb.auth.signInWithPassword({ email, password:pass });
+  if(error){
+    hideLoad();
+    err.textContent = error.message.includes('Invalid') ? 'E-mail ou senha incorretos.' : error.message;
+    return;
+  }
+  // Profile loaded via onAuthStateChange
 }
 
-// ═══ REGISTER ═══
-function doRegister(){
-  var name = document.getElementById('rN').value.trim();
-  var u = document.getElementById('rU').value.trim();
-  var p = document.getElementById('rP').value;
-  var err = document.getElementById('rErr');
-  if(!name||!u||!p){err.textContent='Preencha todos os campos.';return;}
-  if(u.length<3){err.textContent='Usuário deve ter ao menos 3 caracteres.';return;}
+async function doRegister(){
+  const name  = document.getElementById('rName').value.trim();
+  const email = document.getElementById('rEmail').value.trim();
+  const pass  = document.getElementById('rPass').value;
+  const err   = document.getElementById('rErr');
+  if(!name||!email||!pass){ err.textContent='Preencha todos os campos.'; return; }
+  if(pass.length<6){ err.textContent='Senha deve ter ao menos 6 caracteres.'; return; }
   showLoad('Criando conta...');
-  db.collection('r8_users').where('username','==',u.toLowerCase()).get()
-    .then(function(snap){
-      if(!snap.empty){hideLoad();err.textContent='Usuário já existe.';return;}
-      return db.collection('r8_users').add({
-        username:u.toLowerCase(), name:name, password:p,
-        role:'aluno', status:'pending',
-        color:strColor(u), planos:{plan:false,proto:false,ment:false},
-        created:Date.now()
-      });
-    })
-    .then(function(ref){
-      if(!ref) return;
-      hideLoad();
-      document.getElementById('pName').textContent=name+' (@'+u+')';
-      showScreen('scPend');
-      toast('Solicitação enviada!');
-    })
-    .catch(function(e){
-      hideLoad();
-      err.textContent='Erro ao criar conta. Tente novamente.';
-      console.error(e);
-    });
+  const { data, error } = await sb.auth.signUp({
+    email, password:pass,
+    options:{ data:{ full_name:name, username:email.split('@')[0], role:'aluno' } }
+  });
+  hideLoad();
+  if(error){ document.getElementById('rErr').textContent=error.message; return; }
+  document.getElementById('pName').textContent=name+' ('+email+')';
+  showScreen('scPend');
+  toast('Conta criada! Aguarde aprovação.','ti-hourglass');
 }
 
-// ═══ LOGOUT ═══
-function doLogout(){
-  clearSession(); CU=null;
-  document.getElementById('lU').value='';
-  document.getElementById('lP').value='';
+async function doForgot(){
+  const email = document.getElementById('lEmail').value.trim();
+  if(!email){ document.getElementById('lErr').textContent='Digite seu e-mail primeiro.'; return; }
+  showLoad('Enviando...');
+  await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin+'/index.html' });
+  hideLoad();
+  toast('Link de redefinição enviado para '+email,'ti-mail');
+}
+
+async function doLogout(){
+  await sb.auth.signOut();
+  CU=null;
   tab('login');
   showScreen('scLogin');
 }
 
-// ═══ ENTER HUB ═══
-function enterHub(){
-  var user = CU;
-  var col = user.color||strColor(user.username);
-  var av = document.getElementById('hubAv');
-  av.textContent=ini(user.name); av.style.background=col;
-  document.getElementById('hubNm').textContent=user.name.split(' ')[0];
-  document.getElementById('hubWelcome').textContent=user.name.split(' ')[0];
-  document.getElementById('btnAdmin').style.display=user.role==='admin'?'':'none';
+async function doSendReset(){
+  if(!resetEmailTarget) return;
+  await sb.auth.resetPasswordForEmail(resetEmailTarget, { redirectTo: window.location.origin+'/index.html' });
+  closeM('mReset');
+  toast('Link enviado para '+resetEmailTarget,'ti-mail');
+}
+
+// ── CARREGA PERFIL ────────────────────────────────
+async function loadProfile(userId){
+  const { data, error } = await sb.rpc('get_my_profile');
+  if(error||!data) return null;
+  return typeof data === 'string' ? JSON.parse(data) : data;
+}
+
+// ── ENTRA NO HUB ─────────────────────────────────
+function enterHub(profile){
+  CU = profile;
+  const col = profile.color || strColor(profile.id);
+  const av = document.getElementById('hubAv');
+  av.textContent=ini(profile.full_name); av.style.background=col;
+  document.getElementById('hubNm').textContent=(profile.full_name||'').split(' ')[0];
+  document.getElementById('hubWelcome').textContent=(profile.full_name||'').split(' ')[0];
+  document.getElementById('btnAdmin').style.display=profile.role==='admin'?'':'none';
   showScreen('scHub');
   renderMods();
   updateDot();
   initWa();
-  toast('Bem-vindo(a), '+user.name.split(' ')[0]+'!');
+  toast('Bem-vindo(a), '+(profile.full_name||'').split(' ')[0]+'!','ti-hand-stop');
 }
 
-// ═══ MODULES ═══
+// ── MÓDULOS ───────────────────────────────────────
 function renderMods(){
-  if(!CU)return;
-  var pl = CU.planos||{};
-  var ativos = MODS.filter(function(m){return pl[m.id];}).map(function(m){return m.name;});
+  if(!CU) return;
+  const pl = CU.planos||{};
+  const ativos = MODS.filter(m=>pl[m.id]).map(m=>m.name);
   document.getElementById('planosLabel').textContent=ativos.length?ativos.join(', '):'Nenhum módulo liberado';
-  var grid=document.getElementById('modsGrid'); grid.innerHTML='';
-  MODS.forEach(function(m){
-    var ok = pl[m.id]||CU.role==='admin';
-    var feats = m.feats.map(function(f){return '<div class="mod-feat '+(ok?'fok':'fno')+'"><i class="ti '+(ok?'ti-circle-check':'ti-circle-x')+'"></i>'+f+'</div>';}).join('');
-    var div=document.createElement('div');
+  const grid=document.getElementById('modsGrid'); grid.innerHTML='';
+  MODS.forEach(m=>{
+    const ok=pl[m.id]||CU.role==='admin';
+    const feats=m.feats.map(f=>`<div class="mod-feat ${ok?'fok':'fno'}"><i class="ti ${ok?'ti-circle-check':'ti-circle-x'}"></i>${f}</div>`).join('');
+    const div=document.createElement('div');
     div.className='mod '+m.cls+(ok?'':' locked');
-    div.innerHTML='<div class="mod-ico '+m.icoCls+'"><i class="ti '+m.ico+'"></i>'+(ok?'':'<div class="lock-b"><i class="ti ti-lock" style="font-size:10px"></i></div>')+'</div><div class="mod-tag '+m.tagCls+'"><i class="ti '+m.ico+'" style="font-size:11px"></i>'+m.tag+'</div><div class="mod-title">'+m.name+'</div><div class="mod-desc">'+m.desc+'</div><div class="mod-feats">'+feats+'</div>'+(ok?'':'<div class="locked-msg"><i class="ti ti-lock" style="font-size:11px;vertical-align:-1px"></i> Módulo não incluso no seu plano.</div>')+'<button class="mod-btn '+(ok?m.btnCls:'btn-lock')+'" '+(ok?'onclick="openMod(''+m.file+'')"':' disabled')+'><i class="ti '+(ok?'ti-external-link':'ti-lock')+'"></i> '+(ok?'Acessar '+m.name:'Sem acesso')+'</button>';
+    div.innerHTML=`<div class="mod-ico ${m.icoCls}"><i class="ti ${m.ico}"></i>${!ok?'<div class="lock-b"><i class="ti ti-lock" style="font-size:10px"></i></div>':''}</div><div class="mod-tag ${m.tagCls}"><i class="ti ${m.ico}" style="font-size:11px"></i>${m.tag}</div><div class="mod-title">${m.name}</div><div class="mod-desc">${m.desc}</div><div class="mod-feats">${feats}</div>${!ok?'<div class="locked-msg"><i class="ti ti-lock" style="font-size:11px;vertical-align:-1px"></i> Módulo não incluso no seu plano.</div>':''}<button class="mod-btn ${ok?m.btnCls:'btn-lock'}" ${ok?`onclick="openMod('${m.file}')"`:' disabled'}><i class="ti ${ok?'ti-external-link':'ti-lock'}"></i> ${ok?'Acessar '+m.name:'Sem acesso'}</button>`;
     grid.appendChild(div);
   });
 }
 
-function openMod(file){
-  if(CU){
-    // Always refresh user from Firebase before opening module
-    db.collection('r8_users').doc(CU.id).get()
-      .then(function(snap){
-        if(snap.exists){
-          var fresh = Object.assign({id:snap.id}, snap.data());
-          saveSession(fresh);
-          CU = fresh;
-        }
-        var encoded = btoa(JSON.stringify(CU));
-        window.location.href = file + '?u=' + encoded;
-      })
-      .catch(function(){
-        // Use cached user if Firebase fails
-        var encoded = btoa(JSON.stringify(CU));
-        window.location.href = file + '?u=' + encoded;
-      });
-  }
+async function openMod(file){
+  if(!CU) return;
+  showLoad('Abrindo módulo...');
+  // Busca sessão JWT atual para passar ao módulo
+  const { data:{ session } } = await sb.auth.getSession();
+  hideLoad();
+  if(!session){ toast('Sessão expirada. Faça login novamente.','ti-alert-circle'); doLogout(); return; }
+  // Passa access_token na URL — módulo usa para autenticar
+  const token = session.access_token;
+  window.location.href = file + '?token=' + token;
 }
 
-// ═══ ADMIN ═══
-function updateDot(){
-  if(!CU||CU.role!=='admin')return;
-  db.collection('r8_users').where('status','==','pending').get()
-    .then(function(snap){
-      var n=snap.size;
-      var dot=document.getElementById('adminDot');
-      dot.style.display=n>0?'inline-flex':'none';
-      dot.textContent=n;
-    });
+// ── ADMIN ─────────────────────────────────────────
+async function updateDot(){
+  if(!CU||CU.role!=='admin') return;
+  const { data } = await sb.rpc('admin_get_users');
+  const users = data ? (typeof data==='string'?JSON.parse(data):data) : [];
+  const n = users.filter(u=>u.status==='pending').length;
+  const dot = document.getElementById('adminDot');
+  dot.style.display=n>0?'inline-flex':'none';
+  dot.textContent=n;
 }
 
-function renderAdmin(){
+async function renderAdmin(){
   showLoad('Carregando...');
-  db.collection('r8_users').orderBy('created').get()
-    .then(function(snap){
-      hideLoad();
-      var users=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
-      var pend=users.filter(function(u){return u.status==='pending';});
-      var rest=users.filter(function(u){return u.status!=='pending';});
-      var pEl=document.getElementById('admPend');
-      pEl.innerHTML=pend.length?'':'<div class="empty">Nenhuma solicitação pendente. ✓</div>';
-      pend.forEach(function(u){
-        var col=u.color||strColor(u.username);
-        var d=document.createElement('div'); d.className='urow pend';
-        d.innerHTML='<div class="urow-top"><div class="uav" style="background:'+col+'">'+ini(u.name)+'</div><div class="uinfo"><div class="uname">'+u.name+' <span class="bg bgo">Pendente</span></div><div class="usub">@'+u.username+'</div></div><div class="uacts"><button class="btn btn-su" style="font-size:12px;padding:7px 14px" onclick="approveUser(''+u.id+'')"><i class="ti ti-check"></i> Aprovar</button><button class="btn btn-da" style="font-size:12px;padding:7px 14px" onclick="rejectUser(''+u.id+'')"><i class="ti ti-x"></i> Rejeitar</button></div></div>';
-        pEl.appendChild(d);
-      });
-      var uEl=document.getElementById('admUsers'); uEl.innerHTML='';
-      if(!rest.length){uEl.innerHTML='<div class="empty">Nenhum usuário.</div>';return;}
-      rest.forEach(function(u){
-        var col=u.color||strColor(u.username);
-        var isMe=CU&&u.id===CU.id;
-        var sb=u.status==='approved'?'<span class="bg bok">Aprovado</span>':'<span class="bg bre">Bloqueado</span>';
-        var plAtivos=MODS.filter(function(m){return (u.planos||{})[m.id];}).map(function(m){return '<span class="bg" style="background:#e6edf6;color:var(--navy);font-size:10px">'+m.name.split(' ')[0]+'</span>';}).join(' ')||'<span style="color:var(--txt3);font-size:11px">Nenhum</span>';
-        var d=document.createElement('div'); d.className='urow';
-        var planosHtml=MODS.map(function(m){
-          var on=(u.planos||{})[m.id]||false;
-          return '<div class="ptog'+(on?' on':'')+(on&&m.id==='proto'?' tp':'')+'" onclick="togPlano(''+u.id+'',''+m.id+'')"><div class="ptog-l"><i class="ti '+m.ico+'" style="color:'+(on?(m.id==='proto'?'var(--red)':'var(--grn)'):'var(--txt3)')+'"></i>'+m.name.split(' ').slice(0,2).join(' ')+'</div><div class="psw'+(on?' on':'')+'"></div></div>';
-        }).join('');
-        d.innerHTML='<div class="urow-top"><div class="uav" style="background:'+col+'">'+ini(u.name)+'</div><div class="uinfo"><div class="uname">'+u.name+' '+(u.role==='admin'?'<span class="bg bgo">Admin</span>':'')+' '+sb+'</div><div class="usub">@'+u.username+' · '+plAtivos+'</div></div><div class="uacts"><button class="bic" title="Senha" onclick="openReset(''+u.id+'',''+u.name+'')"><i class="ti ti-key"></i></button>'+(!isMe&&u.status==='approved'?'<button class="bic" onclick="blockUser(''+u.id+'')"><i class="ti ti-lock"></i></button>':'')+(!isMe&&u.status==='blocked'?'<button class="bic ok" onclick="unblockUser(''+u.id+'')"><i class="ti ti-lock-open"></i></button>':'')+(!isMe?'<button class="bic del" onclick="delUser(''+u.id+'')"><i class="ti ti-trash"></i></button>':'')+'</div></div><div class="uplanos">'+planosHtml+'</div>';
-        uEl.appendChild(d);
-      });
-      updateDot();
-    })
-    .catch(function(e){hideLoad();toast('Erro ao carregar usuários.');console.error(e);});
+  const { data, error } = await sb.rpc('admin_get_users');
+  hideLoad();
+  if(error){ toast('Erro ao carregar usuários.','ti-alert-circle'); return; }
+  const users = data ? (typeof data==='string'?JSON.parse(data):data) : [];
+  const pend = users.filter(u=>u.status==='pending');
+  const rest = users.filter(u=>u.status!=='pending');
+  const pEl=document.getElementById('admPend');
+  pEl.innerHTML=pend.length?'':'<div class="empty">Nenhuma solicitação pendente. ✓</div>';
+  pend.forEach(u=>{
+    const col=u.color||strColor(u.id);
+    const d=document.createElement('div'); d.className='urow pend';
+    d.innerHTML=`<div class="urow-top"><div class="uav" style="background:${col}">${ini(u.full_name)}</div><div class="uinfo"><div class="uname">${u.full_name} <span class="bg bgo">Pendente</span></div><div class="usub">${u.username}</div></div><div class="uacts"><button class="btn btn-su" style="font-size:12px;padding:7px 14px" onclick="approveUser('${u.id}')"><i class="ti ti-check"></i> Aprovar</button><button class="btn btn-da" style="font-size:12px;padding:7px 14px" onclick="rejectUser('${u.id}')"><i class="ti ti-x"></i> Rejeitar</button></div></div>`;
+    pEl.appendChild(d);
+  });
+  const uEl=document.getElementById('admUsers'); uEl.innerHTML='';
+  if(!rest.length){ uEl.innerHTML='<div class="empty">Nenhum usuário.</div>'; return; }
+  rest.forEach(u=>{
+    const col=u.color||strColor(u.id);
+    const isMe=CU&&u.id===CU.id;
+    const sb_badge=u.status==='approved'?'<span class="bg bok">Aprovado</span>':'<span class="bg bre">Bloqueado</span>';
+    const plAtivos=MODS.filter(m=>(u.planos||{})[m.id]).map(m=>`<span class="bg" style="background:#e6edf6;color:var(--navy);font-size:10px">${m.name.split(' ')[0]}</span>`).join(' ')||'<span style="color:var(--txt3);font-size:11px">Nenhum</span>';
+    const planosHtml=MODS.map(m=>{
+      const on=(u.planos||{})[m.id]||false;
+      return `<div class="ptog${on?' on':''}" onclick="togPlano('${u.id}','${m.id}')"><div class="ptog-l"><i class="ti ${m.ico}" style="color:${on?'var(--grn)':'var(--txt3)'}"></i>${m.name.split(' ').slice(0,2).join(' ')}</div><div class="psw${on?' on':''}"></div></div>`;
+    }).join('');
+    const d=document.createElement('div'); d.className='urow';
+    d.innerHTML=`<div class="urow-top"><div class="uav" style="background:${col}">${ini(u.full_name)}</div><div class="uinfo"><div class="uname">${u.full_name} ${u.role==='admin'?'<span class="bg bgo">Admin</span>':''} ${sb_badge}</div><div class="usub">${u.username} · ${plAtivos}</div></div><div class="uacts"><button class="bic" title="Redefinir senha" onclick="openReset('${u.id}','${u.username}')"><i class="ti ti-key"></i></button>${!isMe&&u.status==='approved'?`<button class="bic" onclick="blockUser('${u.id}')"><i class="ti ti-lock"></i></button>`:''}${!isMe&&u.status==='blocked'?`<button class="bic ok" onclick="unblockUser('${u.id}')"><i class="ti ti-lock-open"></i></button>`:''}${!isMe?`<button class="bic del" onclick="delUser('${u.id}')"><i class="ti ti-trash"></i></button>`:''}  </div></div><div class="uplanos">${planosHtml}</div>`;
+    uEl.appendChild(d);
+  });
+  updateDot();
 }
 
-function approveUser(id){ db.collection('r8_users').doc(id).update({status:'approved'}).then(function(){toast('Aprovado!');renderAdmin();}).catch(function(e){toast('Erro.');console.error(e);}); }
-function rejectUser(id){ if(!confirm('Rejeitar?'))return; db.collection('r8_users').doc(id).delete().then(function(){toast('Rejeitado.');renderAdmin();}); }
-function blockUser(id){ db.collection('r8_users').doc(id).update({status:'blocked'}).then(function(){toast('Bloqueado.');renderAdmin();}); }
-function unblockUser(id){ db.collection('r8_users').doc(id).update({status:'approved'}).then(function(){toast('Desbloqueado.');renderAdmin();}); }
-function delUser(id){ if(!confirm('Excluir permanentemente?'))return; db.collection('r8_users').doc(id).delete().then(function(){toast('Excluído.');renderAdmin();}); }
+async function approveUser(id){ await sb.rpc('admin_update_user',{target_id:id,new_status:'approved'}); toast('Aprovado!'); renderAdmin(); }
+async function rejectUser(id){ if(!confirm('Rejeitar?'))return; await sb.rpc('admin_delete_user',{target_id:id}); toast('Rejeitado.'); renderAdmin(); }
+async function blockUser(id){ await sb.rpc('admin_update_user',{target_id:id,new_status:'blocked'}); toast('Bloqueado.'); renderAdmin(); }
+async function unblockUser(id){ await sb.rpc('admin_update_user',{target_id:id,new_status:'approved'}); toast('Desbloqueado.'); renderAdmin(); }
+async function delUser(id){ if(!confirm('Excluir permanentemente?'))return; await sb.rpc('admin_delete_user',{target_id:id}); toast('Excluído.'); renderAdmin(); }
 
-function togPlano(uid, mid){
-  db.collection('r8_users').doc(uid).get()
-    .then(function(snap){
-      if(!snap.exists)return;
-      var planos = Object.assign({plan:false,proto:false,ment:false}, snap.data().planos||{});
-      planos[mid] = !planos[mid];
-      return db.collection('r8_users').doc(uid).update({planos:planos})
-        .then(function(){
-          if(CU&&CU.id===uid){CU.planos=planos;saveSession(CU);renderMods();}
-          toast(planos[mid]?'Módulo liberado!':'Módulo removido.');
-          renderAdmin();
-        });
-    }).catch(function(e){toast('Erro.');console.error(e);});
+async function togPlano(uid,mid){
+  const { data } = await sb.rpc('admin_get_users');
+  const users = data?(typeof data==='string'?JSON.parse(data):data):[];
+  const user = users.find(u=>u.id===uid);
+  if(!user) return;
+  const planos = Object.assign({plan:false,proto:false,ment:false},user.planos||{});
+  planos[mid]=!planos[mid];
+  await sb.rpc('admin_update_user',{target_id:uid,new_planos:planos});
+  toast(planos[mid]?'Módulo liberado!':'Módulo removido.');
+  renderAdmin();
 }
 
 function openNew(){
-  ['mnN','mnU','mnP'].forEach(function(i){document.getElementById(i).value='';});
-  document.getElementById('mnR').value='aluno';
+  ['mnName','mnEmail','mnPass'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('mnRole').value='aluno';
   document.getElementById('mnM1').checked=true;
   document.getElementById('mnM2').checked=false;
   document.getElementById('mnM3').checked=false;
   document.getElementById('mnErr').textContent='';
   document.getElementById('mNew').classList.add('open');
 }
-function admCreate(){
-  var n=document.getElementById('mnN').value.trim(),u=document.getElementById('mnU').value.trim(),p=document.getElementById('mnP').value,r=document.getElementById('mnR').value,err=document.getElementById('mnErr');
-  if(!n||!u||!p){err.textContent='Preencha todos os campos.';return;}
-  db.collection('r8_users').where('username','==',u.toLowerCase()).get()
-    .then(function(snap){
-      if(!snap.empty){err.textContent='Usuário já existe.';return;}
-      var planos={plan:document.getElementById('mnM1').checked,proto:document.getElementById('mnM2').checked,ment:document.getElementById('mnM3').checked};
-      return db.collection('r8_users').add({username:u.toLowerCase(),name:n,password:p,role:r,status:'approved',color:rndColor(),planos:planos,created:Date.now()})
-        .then(function(){closeM('mNew');toast('"'+n+'" criado!');renderAdmin();});
-    }).catch(function(e){err.textContent='Erro ao criar.';console.error(e);});
-}
-function openReset(id,name){ resetTarget=id; document.getElementById('resetLbl').textContent=name; document.getElementById('resetP').value=''; document.getElementById('mReset').classList.add('open'); }
-function doReset(){
-  var p=document.getElementById('resetP').value;
-  if(!p){alert('Informe a nova senha.');return;}
-  db.collection('r8_users').doc(resetTarget).update({password:p}).then(function(){closeM('mReset');toast('Senha redefinida!');});
-}
 
-// ═══ WHATSAPP ═══
-function waOpen(e){e.preventDefault();e.stopPropagation();var n=localStorage.getItem(WK)||'';if(!n){if(CU&&CU.role==='admin')waToggle(e);else alert('Suporte não configurado.');return;}window.open('https://wa.me/'+n+'?text='+encodeURIComponent('Olá! Preciso de suporte com a plataforma R8-Concursos.'),'_blank');}
-function waToggle(e){if(e){e.preventDefault();e.stopPropagation();}var p=document.getElementById('waPanel');p.classList.toggle('open');if(p.classList.contains('open')){document.getElementById('waInp').value=localStorage.getItem(WK)||'';waPrev();}}
-function waPrev(){var n=(document.getElementById('waInp').value||'').replace(/\D/g,'');document.getElementById('waPrevEl').textContent=n.length>=10?'✓ wa.me/'+n:'';}
-function waSave(){var n=(document.getElementById('waInp').value||'').replace(/\D/g,'');if(n.length<10){alert('Número inválido.');return;}localStorage.setItem(WK,n);document.getElementById('waPanel').classList.remove('open');toast('WhatsApp salvo!');}
-function initWa(){if(CU&&CU.role==='admin'){var b=document.getElementById('waAdm');if(b)b.style.display='flex';}document.addEventListener('click',function(e){var p=document.getElementById('waPanel'),btn=document.getElementById('waBtn');if(p&&btn&&!btn.contains(e.target))p.classList.remove('open');});}
-
-// ═══ INIT ═══
-window.addEventListener('load', function(){
-  // Show login immediately
-  showScreen('scLogin');
-  
-  // Check cached session
-  var cached = loadSession();
-  if(cached && cached.status === 'approved'){
-    CU = cached;
-    enterHub();
-    // Refresh user in background
-    db.collection('r8_users').doc(cached.id).get()
-      .then(function(snap){
-        if(snap.exists){
-          var fresh = Object.assign({id:snap.id}, snap.data());
-          if(fresh.status === 'approved'){
-            saveSession(fresh); CU=fresh; renderMods();
-          } else {
-            clearSession(); CU=null; showScreen('scLogin');
-          }
-        }
-      }).catch(function(){});
-    return;
+async function admCreate(){
+  const name=document.getElementById('mnName').value.trim();
+  const email=document.getElementById('mnEmail').value.trim();
+  const pass=document.getElementById('mnPass').value;
+  const role=document.getElementById('mnRole').value;
+  const err=document.getElementById('mnErr');
+  if(!name||!email||!pass){ err.textContent='Preencha todos os campos.'; return; }
+  if(pass.length<6){ err.textContent='Senha mínimo 6 caracteres.'; return; }
+  showLoad('Criando usuário...');
+  const planos={plan:document.getElementById('mnM1').checked,proto:document.getElementById('mnM2').checked,ment:document.getElementById('mnM3').checked};
+  // Cria usuário via Supabase Auth Admin (service role) — não disponível client-side
+  // Usamos signup normal e ajustamos perfil depois via RPC
+  const { data, error } = await sb.auth.signUp({
+    email, password:pass,
+    options:{ data:{ full_name:name, username:email.split('@')[0], role } }
+  });
+  if(error){ hideLoad(); err.textContent=error.message; return; }
+  if(data.user){
+    // Atualiza perfil com role, status approved e planos via RPC admin
+    await sb.rpc('admin_update_user',{target_id:data.user.id, new_status:'approved', new_role:role, new_planos:planos});
   }
-  
-  // Seed admin once
-  if(!localStorage.getItem('r8_admin_ok')){
-    db.collection('r8_users').where('username','==','admin').get()
-      .then(function(snap){
-        if(snap.empty){
-          return db.collection('r8_users').add({
-            username:'admin',name:'Administrador R8',password:'admin123',
-            role:'admin',status:'approved',color:'#c9a84c',
-            planos:{plan:true,proto:true,ment:true},created:Date.now()
-          });
-        }
-      })
-      .then(function(){localStorage.setItem('r8_admin_ok','1');})
-      .catch(function(){});
+  hideLoad(); closeM('mNew'); toast('"'+name+'" criado!'); renderAdmin();
+}
+
+function openReset(id, email){
+  resetEmailTarget=email;
+  document.getElementById('resetEmail').textContent=email;
+  document.getElementById('mReset').classList.add('open');
+}
+
+// ── WHATSAPP ─────────────────────────────────────
+function waOpen(e){e.preventDefault();e.stopPropagation();const n=localStorage.getItem(WK)||'';if(!n){if(CU&&CU.role==='admin')waToggle(e);else alert('Suporte não configurado.');return;}window.open('https://wa.me/'+n+'?text='+encodeURIComponent('Olá! Preciso de suporte com a plataforma R8-Concursos.'),'_blank');}
+function waToggle(e){if(e){e.preventDefault();e.stopPropagation();}const p=document.getElementById('waPanel');p.classList.toggle('open');if(p.classList.contains('open')){document.getElementById('waInp').value=localStorage.getItem(WK)||'';waPrev();}}
+function waPrev(){const n=(document.getElementById('waInp').value||'').replace(/\D/g,'');document.getElementById('waPrevEl').textContent=n.length>=10?'✓ wa.me/'+n:'';}
+function waSave(){const n=(document.getElementById('waInp').value||'').replace(/\D/g,'');if(n.length<10){alert('Número inválido.');return;}localStorage.setItem(WK,n);document.getElementById('waPanel').classList.remove('open');toast('WhatsApp salvo!');}
+function initWa(){if(CU&&CU.role==='admin'){const b=document.getElementById('waAdm');if(b)b.style.display='flex';}document.addEventListener('click',function(e){const p=document.getElementById('waPanel'),btn=document.getElementById('waBtn');if(p&&btn&&!btn.contains(e.target))p.classList.remove('open');});}
+
+// ── AUTH STATE LISTENER (coração do sistema) ──────
+sb.auth.onAuthStateChange(async (event, session) => {
+  if(event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED'){
+    showLoad('Carregando perfil...');
+    const profile = await loadProfile(session.user.id);
+    hideLoad();
+    if(!profile){ toast('Perfil não encontrado.','ti-alert-circle'); await sb.auth.signOut(); showScreen('scLogin'); return; }
+    if(profile.status === 'blocked'){ toast('Conta bloqueada.','ti-ban'); await sb.auth.signOut(); showScreen('scLogin'); return; }
+    if(profile.status === 'pending'){ document.getElementById('pName').textContent=(profile.full_name||'')+' ('+session.user.email+')'; hideLoad(); showScreen('scPend'); return; }
+    enterHub(profile);
+  }
+  if(event === 'SIGNED_OUT'){
+    CU=null; showScreen('scLogin');
+  }
+  if(event === 'PASSWORD_RECOVERY'){
+    const newPass = prompt('Digite sua nova senha (mínimo 6 caracteres):');
+    if(newPass && newPass.length>=6){
+      await sb.auth.updateUser({password:newPass});
+      toast('Senha atualizada com sucesso!','ti-check');
+    }
   }
 });
+
+// ── INIT ──────────────────────────────────────────
+(async()=>{
+  showScreen('scLogin');
+  // Supabase Auth restaura sessão automaticamente via cookie/localStorage
+  // onAuthStateChange dispara com SIGNED_IN se há sessão ativa
+  const { data:{ session } } = await sb.auth.getSession();
+  if(!session) hideLoad();
+})();
 </script>
 </body>
 </html>
