@@ -5,12 +5,14 @@
 <script>
 (function() {
   var MID = 'plan';
-  var sb = window.supabase.createClient('https://uofgfvwghbhapimepwng.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvZmdmdndnaGJoYXBpbWVwd25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2Njg3ODQsImV4cCI6MjA5NTI0NDc4NH0.RZhrt16AIwIg3PDT3n38q4tSvG6jhoppQb-_-Omw358');
+  var SB_URL = 'https://uofgfvwghbhapimepwng.supabase.co';
+  var SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvZmdmdndnaGJoYXBpbWVwd25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2Njg3ODQsImV4cCI6MjA5NTI0NDc4NH0.RZhrt16AIwIg3PDT3n38q4tSvG6jhoppQb-_-Omw358';
+  var sb = window.supabase.createClient(SB_URL, SB_ANON);
 
   async function init() {
-    console.log('[R8-MOD] Iniciando módulo:', MID);
+    console.log('[R8-MOD] Módulo:', MID);
 
-    // Pega sessão persistida pelo Supabase Auth
+    // Pega sessão
     var session = null;
     try {
       var result = await sb.auth.getSession();
@@ -21,44 +23,49 @@
     }
 
     if (!session) {
-      console.log('[R8-MOD] Sem sessão — redirecionando para login');
+      console.log('[R8-MOD] Sem sessão — login');
       location.replace('index.html');
       return;
     }
 
-    // Carrega profile diretamente da tabela
+    // Busca profile via fetch direto com JWT do usuário
     var profile = null;
     try {
-      var q = await sb
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single();
-
-      console.log('[R8-MOD] Profile:', q.data, q.error);
-
-      if (!q.error && q.data) profile = q.data;
+      var resp = await fetch(
+        SB_URL + '/rest/v1/profiles?id=eq.' + session.user.id + '&select=*',
+        {
+          headers: {
+            'apikey': SB_ANON,
+            'Authorization': 'Bearer ' + session.access_token,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      console.log('[R8-MOD] Profile status:', resp.status);
+      var rows = await resp.json();
+      console.log('[R8-MOD] Profile rows:', rows);
+      if (rows && rows.length > 0) profile = rows[0];
     } catch(e) {
       console.error('[R8-MOD] Profile error:', e);
     }
 
     if (!profile || profile.status !== 'approved') {
-      console.log('[R8-MOD] Profile inválido:', profile?.status);
+      console.log('[R8-MOD] Perfil inválido:', profile);
       location.replace('index.html');
       return;
     }
 
-    // Verifica permissão do módulo
+    // Verifica permissão
     if (profile.role !== 'admin') {
       var pl = profile.planos || {};
       if (!pl[MID]) {
         document.body.style = 'margin:0;background:#0f1d35;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:Inter,sans-serif';
-        document.body.innerHTML = '<div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:2.5rem;max-width:400px;text-align:center;color:#fff"><div style="font-size:48px;margin-bottom:1rem">⛔</div><div style="font-family:Syne,sans-serif;font-size:20px;font-weight:700;margin-bottom:.5rem">Sem permissão</div><div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:1.5rem">Este módulo não está no seu plano. Solicite ao administrador.</div><a href=\"index.html\" style=\"padding:11px 24px;background:#c9a84c;border-radius:10px;color:#0f1d35;font-weight:700;text-decoration:none;font-size:14px\">← Voltar ao Hub</a></div>';
+        document.body.innerHTML = '<div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:2.5rem;max-width:400px;text-align:center;color:#fff"><div style="font-size:48px;margin-bottom:1rem">⛔</div><div style="font-family:Syne,sans-serif;font-size:20px;font-weight:700;margin-bottom:.5rem">Sem permissão</div><div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:1.5rem">Este módulo não está no seu plano.</div><a href=\"index.html\" style=\"padding:11px 24px;background:#c9a84c;border-radius:10px;color:#0f1d35;font-weight:700;text-decoration:none;font-size:14px\">← Voltar ao Hub</a></div>';
         return;
       }
     }
 
-    // Auth OK
+    // OK
     window.R8_USER = profile;
     window.R8_MODULE_ID = MID;
     window.R8_SB = sb;
@@ -71,12 +78,12 @@
       if (b) b.style.display = 'flex';
       if (a) {
         var nm = profile.full_name || '?';
-        a.textContent = nm.split(' ').slice(0,2).map(function(w) { return w[0] || ''; }).join('').toUpperCase() || '?';
+        a.textContent = nm.split(' ').slice(0,2).map(function(w){return w[0]||''}).join('').toUpperCase()||'?';
         a.style.background = profile.color || '#534AB7';
       }
-      if (n) n.textContent = (profile.full_name || '').split(' ')[0];
+      if (n) n.textContent = (profile.full_name||'').split(' ')[0];
       if (profile.role === 'admin') {
-        document.querySelectorAll('[data-admin-only]').forEach(function(el) { el.style.display = ''; });
+        document.querySelectorAll('[data-admin-only]').forEach(function(el){el.style.display='';});
       }
     }
 
@@ -88,11 +95,12 @@
   }
 
   init().catch(function(e) {
-    console.error('[R8-MOD] Fatal error:', e);
+    console.error('[R8-MOD] Fatal:', e);
     location.replace('index.html');
   });
 })();
 </script>
+
 
 
 
