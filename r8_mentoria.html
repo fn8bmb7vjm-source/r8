@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script>
+(function(){
+  var MID = 'ment';
+  var KEY = 'r8_session';
+  
+  function run(){
+    var user = null;
+    
+    // 1. Try URL param ?u= (sent by hub)
+    try{
+      var up = new URLSearchParams(location.search).get('u');
+      if(up && up.length > 10){
+        user = JSON.parse(atob(up));
+        localStorage.setItem(KEY, JSON.stringify({user:user, ts:Date.now()}));
+        history.replaceState({},'',location.pathname);
+      }
+    }catch(e){}
+    
+    // 2. Try localStorage
+    if(!user){
+      try{
+        var s = JSON.parse(localStorage.getItem(KEY)||'null');
+        if(s && s.user && (Date.now()-s.ts) < 7*24*3600*1000){
+          user = s.user;
+        }
+      }catch(e){}
+    }
+    
+    // 3. Not logged in
+    if(!user){ location.replace('index.html'); return; }
+    if(user.status !== 'approved'){ location.replace('index.html'); return; }
+    
+    // 4. Check module permission
+    if(user.role !== 'admin'){
+      var pl = user.planos || {};
+      if(!pl[MID]){
+        document.body.style = 'margin:0;background:#0f1d35;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:Inter,sans-serif';
+        document.body.innerHTML = '<div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:2.5rem;max-width:400px;text-align:center;color:#fff"><div style="font-size:48px;margin-bottom:1rem">⛔</div><div style="font-family:Syne,sans-serif;font-size:20px;font-weight:700;margin-bottom:.5rem">Sem permissão</div><div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:1.5rem">Este módulo não está no seu plano. Solicite ao administrador.</div><a href=\"index.html\" style=\"display:inline-flex;align-items:center;gap:8px;padding:11px 24px;background:#c9a84c;border-radius:10px;color:#0f1d35;font-weight:700;text-decoration:none;font-size:14px\">← Voltar ao Hub</a></div>';
+        return;
+      }
+    }
+    
+    // 5. Auth passed
+    window.R8_USER = user;
+    window.R8_MODULE_ID = MID;
+    
+    function applyBadge(){
+      var b=document.getElementById('userBadge');
+      var a=document.getElementById('badgeAv');
+      var n=document.getElementById('badgeName');
+      if(b) b.style.display='flex';
+      if(a){
+        var nm=user.name||'?';
+        a.textContent=nm.split(' ').slice(0,2).map(function(w){return w[0]||''}).join('').toUpperCase()||'?';
+        a.style.background=user.color||'#534AB7';
+      }
+      if(n) n.textContent=(user.name||'').split(' ')[0];
+      if(user.role==='admin') document.querySelectorAll('[data-admin-only]').forEach(function(el){el.style.display='';});
+    }
+    
+    if(document.readyState==='loading'){
+      document.addEventListener('DOMContentLoaded', applyBadge);
+    } else {
+      applyBadge();
+    }
+  }
+  
+  // Run immediately
+  run();
+})();
+</script>
+
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>R8-Concursos · <span data-plabel="Título da página">Mentoria para Concursos</span></title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css"/>
+<style>
+:root{--navy:#1a2c4e;--navydark:#0f1d35;--gold:#c9a84c;--goldl:#f0d080;--grn:#1D9E75;--red:#A32D2D;--pur:#534AB7}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:#0f1d35;color:#fff;min-height:100vh;display:flex;flex-direction:column}
+/* TOPBAR */
+.topbar{background:rgba(0,0,0,.3);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,.08);padding:0 1.5rem;height:60px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+.tb-logo{display:flex;align-items:center;gap:10px}
+.tb-logo img{width:34px;height:34px;object-fit:contain;border-radius:6px;background:#1a2c4e;padding:3px}
+.tb-brand{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:#fff;letter-spacing:.05em}
+.tb-tag{font-size:10px;color:rgba(255,255,255,.35);font-style:italic}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.user-badge{display:none;align-items:center;gap:8px;padding:4px 12px 4px 4px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1)}
+.badge-av{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;color:#fff}
+.badge-nm{font-size:12px;color:#fff;font-weight:500}
+.back-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;color:rgba(255,255,255,.6);font-size:12px;cursor:pointer;text-decoration:none;transition:all .2s}.back-btn:hover{background:rgba(255,255,255,.14);color:#fff}
+/* HERO */
+.hero{background:linear-gradient(135deg,#0e5c3c,#0e5c3cdd);padding:3rem 2rem;text-align:center}
+.hero-ico{font-size:56px;display:block;margin-bottom:1rem}
+.hero-title{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;margin-bottom:.5rem;letter-spacing:.03em}
+.hero-sub{font-size:14px;opacity:.8;line-height:1.6;max-width:500px;margin:0 auto}
+/* NAV */
+.mnav-bar{background:rgba(0,0,0,.25);border-bottom:1px solid rgba(255,255,255,.08);padding:.625rem 1.5rem;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.mnav{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:rgba(255,255,255,.5);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:4px 12px;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+.mnav:hover{background:rgba(255,255,255,.12);color:#fff}
+.mnav.admin-nav{border-color:rgba(201,168,76,.4);color:rgba(201,168,76,.7)}
+.mnav.reset-nav{border-color:rgba(163,45,45,.4);color:rgba(163,45,45,.7)}
+/* CONTENT */
+.mcontent{flex:1;padding:1.5rem;max-width:820px;margin:0 auto;width:100%}
+/* SECTIONS */
+.msec{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:1.5rem;margin-bottom:1rem;scroll-margin-top:70px}
+.msec-head{display:flex;align-items:center;gap:14px;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid rgba(255,255,255,.08)}
+.msec-ico{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.msec-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:#fff;margin-bottom:3px}
+.msec-desc{font-size:12px;color:rgba(255,255,255,.5)}
+.msec-body{font-size:14px;color:rgba(255,255,255,.7);line-height:1.7}
+.coming-soon{text-align:center;padding:2rem;background:rgba(255,255,255,.03);border-radius:10px;border:1.5px dashed rgba(255,255,255,.1);color:rgba(255,255,255,.4)}
+/* BUTTONS */
+.mbtn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;border:none;cursor:pointer;font-family:'Syne',sans-serif;font-size:13px;font-weight:600;transition:all .2s}
+.mbtn-gold{background:var(--gold);color:#0f1d35}.mbtn-gold:hover{background:var(--goldl)}
+.mbtn-ghost{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.15)}.mbtn-ghost:hover{background:rgba(255,255,255,.14)}
+/* TOAST */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:#1a2c4e;color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;z-index:9999;opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none;display:flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.1)}.toast.show{opacity:1;transform:translateY(0)}.toast i{font-size:16px;color:var(--gold)}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:999px}
+@media(max-width:600px){.hero-title{font-size:22px}.mcontent{padding:1rem}}
+
+/* WHATSAPP SUPPORT BUTTON */
+.wa-btn{position:fixed;bottom:1.5rem;right:1.5rem;z-index:9000;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.wa-bubble{background:#25D366;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 16px rgba(37,211,102,.45);transition:all .2s;border:none;text-decoration:none;animation:waPulse 2.5s infinite;position:relative}
+.wa-bubble:hover{transform:scale(1.1);box-shadow:0 6px 24px rgba(37,211,102,.6)}
+.wa-bubble svg{width:28px;height:28px;fill:#fff}
+@keyframes waPulse{0%,100%{box-shadow:0 4px 16px rgba(37,211,102,.45)}50%{box-shadow:0 4px 28px rgba(37,211,102,.75),0 0 0 8px rgba(37,211,102,.1)}}
+.wa-tooltip{background:#fff;color:#0f1d35;font-size:13px;font-weight:600;padding:8px 14px;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.12);white-space:nowrap;display:none;border:1px solid #d8e2f0;position:relative;font-family:'Inter',sans-serif}
+.wa-tooltip::after{content:'';position:absolute;right:16px;bottom:-6px;width:12px;height:12px;background:#fff;border-right:1px solid #d8e2f0;border-bottom:1px solid #d8e2f0;transform:rotate(45deg)}
+.wa-btn:hover .wa-tooltip{display:block}
+.wa-admin-badge{position:absolute;top:-3px;right:-3px;width:18px;height:18px;background:#1a2c4e;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;font-weight:700;border:2px solid #25D366;cursor:pointer;z-index:1}
+.wa-config-panel{display:none;background:#fff;border-radius:14px;padding:1rem;box-shadow:0 8px 32px rgba(0,0,0,.15);border:1px solid #d8e2f0;width:280px;margin-bottom:4px}
+.wa-config-panel.open{display:block}
+.wa-config-title{font-size:13px;font-weight:700;color:#1a2c4e;margin-bottom:8px;display:flex;align-items:center;gap:6px;font-family:'Syne',sans-serif}
+.wa-config-hint{font-size:11px;color:#8a9bb8;margin-bottom:8px;line-height:1.5}
+.wa-config-input{width:100%;padding:8px 11px;border-radius:8px;border:1px solid #c8d4e8;background:#f0f4fa;font-size:13px;font-family:'Inter',sans-serif;color:#0f1d35;outline:none;margin-bottom:6px}
+.wa-config-input:focus{border-color:#25D366}
+.wa-preview{font-size:11px;color:#25D366;font-weight:600;margin-bottom:8px;min-height:16px}
+.wa-save-btn{width:100%;padding:9px;background:#25D366;border:none;border-radius:8px;color:#fff;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
+.wa-save-btn:hover{background:#1ebe5a}
+
+</style>
+</head>
+<body>
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toastMsg"></span></div>
+<div class="topbar">
+  <div class="tb-logo">
+    <img src="data:image/jpeg;base64,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KQAAAAKQAAAAKQAAAAKQAAAAKQAAAAKQAAAAKQAUEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAUAQpAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApABQQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABQBCkAAAACkAAAACkAAAACkAAAACkAAAACkAAAACkAAAACkAAAACkAAAACkAAAACkAAAACkAAAACkAAAACkAAAACkAAAACkAFBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFAEKQAAAAKQAAAAKQAAAAKQAAAAKQAAAAKQAAAAKQAAAAKQAAAAKQAAAAKQAAAAKQAAAAKQAAAAKQAAAAKQAAAAKQAAAAKQAUEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAUAQpAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApAAAAApABQQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH/2Q==" alt="R8"/>
+    <div><div class="tb-brand">R8-CONCURSOS</div><div class="tb-tag" data-plabel="Título da página">Mentoria para Concursos</div></div>
+  </div>
+  <div class="tb-right">
+    <div class="user-badge" id="userBadge"><div class="badge-av" id="badgeAv"></div><span class="badge-nm" id="badgeName"></span></div>
+    <a class="back-btn" href="index.html"><i class="ti ti-arrow-left"></i> Hub R8</a>
+  </div>
+</div>
+<div class="hero">
+  <i class="hero-ico ti ti-users"></i>
+  <div class="hero-title" data-plabel="Seção principal">Mentoria para Concursos</div>
+  <div class="hero-sub" data-plabel="Descrição geral">Acompanhamento personalizado com trilha individual, feedback semanal e orientação estratégica completa para a aprovação.</div>
+</div>
+<div class="mnav-bar">
+  <a class="mnav" onclick="goToBlock('b1')">Trilha</a>
+<a class="mnav" onclick="goToBlock('b2')">Feedback</a>
+<a class="mnav" onclick="goToBlock('b3')">Chat</a>
+<a class="mnav" onclick="goToBlock('b4')">Materiais</a>
+<a class="mnav" onclick="goToBlock('b5')">Análise</a>
+<a class="mnav" onclick="goToBlock('b6')">Sessões</a>
+  <a class="mnav admin-nav" id="adminNavBtn" style="display:none" onclick="goToBlock('mAdmin')"><i class="ti ti-pencil"></i> Personalizar campos</a>
+  <a class="mnav reset-nav" onclick="goToBlock('mReset')"><i class="ti ti-trash"></i> Resetar</a>
+</div>
+<div class="mcontent">
+
+    <div class="msec" id="b1" data-plabel="Bloco 1_section">
+      <div class="msec-head">
+        <div class="msec-ico" style="background:rgba(29,158,117,.7)"><i class="ti ti-route" style="font-size:22px;color:#fff"></i></div>
+        <div>
+          <div class="msec-title" data-plabel="Bloco 1">Trilha Personalizada</div>
+          <div class="msec-desc" data-plabel="Bloco 1_desc">Plano de estudo individual por perfil</div>
+        </div>
+      </div>
+      <div class="msec-body">
+        <div class="coming-soon">
+          <i class="ti ti-clock" style="font-size:28px;display:block;margin-bottom:8px;opacity:.5"></i>
+          <div style="font-weight:600;margin-bottom:4px">Em desenvolvimento</div>
+          <div style="font-size:13px;opacity:.65">Este bloco estará disponível em breve.</div>
+        </div>
+      </div>
+    </div>
+    <div class="msec" id="b2" data-plabel="Bloco 2_section">
+      <div class="msec-head">
+        <div class="msec-ico" style="background:rgba(29,158,117,.6)"><i class="ti ti-chart-line" style="font-size:22px;color:#fff"></i></div>
+        <div>
+          <div class="msec-title" data-plabel="Bloco 2">Feedback Semanal</div>
+          <div class="msec-desc" data-plabel="Bloco 2_desc">Análise detalhada do seu desempenho</div>
+        </div>
+      </div>
+      <div class="msec-body">
+        <div class="coming-soon">
+          <i class="ti ti-clock" style="font-size:28px;display:block;margin-bottom:8px;opacity:.5"></i>
+          <div style="font-weight:600;margin-bottom:4px">Em desenvolvimento</div>
+          <div style="font-size:13px;opacity:.65">Este bloco estará disponível em breve.</div>
+        </div>
+      </div>
+    </div>
+    <div class="msec" id="b3" data-plabel="Bloco 3_section">
+      <div class="msec-head">
+        <div class="msec-ico" style="background:rgba(24,95,165,.7)"><i class="ti ti-message-circle" style="font-size:22px;color:#fff"></i></div>
+        <div>
+          <div class="msec-title" data-plabel="Bloco 3">Chat com Mentor</div>
+          <div class="msec-desc" data-plabel="Bloco 3_desc">Tire dúvidas diretamente com especialistas</div>
+        </div>
+      </div>
+      <div class="msec-body">
+        <div class="coming-soon">
+          <i class="ti ti-clock" style="font-size:28px;display:block;margin-bottom:8px;opacity:.5"></i>
+          <div style="font-weight:600;margin-bottom:4px">Em desenvolvimento</div>
+          <div style="font-size:13px;opacity:.65">Este bloco estará disponível em breve.</div>
+        </div>
+      </div>
+    </div>
+    <div class="msec" id="b4" data-plabel="Bloco 4_section">
+      <div class="msec-head">
+        <div class="msec-ico" style="background:rgba(133,79,11,.7)"><i class="ti ti-books" style="font-size:22px;color:#fff"></i></div>
+        <div>
+          <div class="msec-title" data-plabel="Bloco 4">Materiais Exclusivos</div>
+          <div class="msec-desc" data-plabel="Bloco 4_desc">Resumos e esquemas por edital</div>
+        </div>
+      </div>
+      <div class="msec-body">
+        <div class="coming-soon">
+          <i class="ti ti-clock" style="font-size:28px;display:block;margin-bottom:8px;opacity:.5"></i>
+          <div style="font-weight:600;margin-bottom:4px">Em desenvolvimento</div>
+          <div style="font-size:13px;opacity:.65">Este bloco estará disponível em breve.</div>
+        </div>
+      </div>
+    </div>
+    <div class="msec" id="b5" data-plabel="Bloco 5_section">
+      <div class="msec-head">
+        <div class="msec-ico" style="background:rgba(83,74,183,.7)"><i class="ti ti-file-search" style="font-size:22px;color:#fff"></i></div>
+        <div>
+          <div class="msec-title" data-plabel="Bloco 5">Análise de Edital</div>
+          <div class="msec-desc" data-plabel="Bloco 5_desc">Orientação estratégica do conteúdo</div>
+        </div>
+      </div>
+      <div class="msec-body">
+        <div class="coming-soon">
+          <i class="ti ti-clock" style="font-size:28px;display:block;margin-bottom:8px;opacity:.5"></i>
+          <div style="font-weight:600;margin-bottom:4px">Em desenvolvimento</div>
+          <div style="font-size:13px;opacity:.65">Este bloco estará disponível em breve.</div>
+        </div>
+      </div>
+    </div>
+    <div class="msec" id="b6" data-plabel="Bloco 6_section">
+      <div class="msec-head">
+        <div class="msec-ico" style="background:rgba(201,87,10,.7)"><i class="ti ti-video" style="font-size:22px;color:#fff"></i></div>
+        <div>
+          <div class="msec-title" data-plabel="Bloco 6">Sessões ao Vivo</div>
+          <div class="msec-desc" data-plabel="Bloco 6_desc">Dúvidas e orientação em tempo real</div>
+        </div>
+      </div>
+      <div class="msec-body">
+        <div class="coming-soon">
+          <i class="ti ti-clock" style="font-size:28px;display:block;margin-bottom:8px;opacity:.5"></i>
+          <div style="font-weight:600;margin-bottom:4px">Em desenvolvimento</div>
+          <div style="font-size:13px;opacity:.65">Este bloco estará disponível em breve.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADMIN PERSONALIZE -->
+    <div class="msec" id="mAdmin" style="display:none">
+      <div class="msec-head">
+        <div class="msec-ico" style="background:#c9a84c"><i class="ti ti-pencil" style="font-size:18px;color:#0f1d35"></i></div>
+        <div><div class="msec-title">Personalizar campos</div><div class="msec-desc">Edite os nomes exibidos nesta página</div></div>
+      </div>
+      <div class="msec-body">
+        <div style="font-size:13px;color:rgba(255,255,255,.6);margin-bottom:14px">Personalize os rótulos de cada bloco desta página. Alterações aplicadas imediatamente.</div>
+        <div id="fieldLabelsForm"></div>
+        <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+          <button class="mbtn mbtn-gold" onclick="savePageLabels('fieldLabelsForm')"><i class="ti ti-device-floppy"></i> Salvar</button>
+          <button class="mbtn mbtn-ghost" onclick="resetPageLabels()"><i class="ti ti-refresh"></i> Restaurar padrão</button>
+        </div>
+      </div>
+    </div>
+    <!-- RESET SECTION -->
+    <div class="msec" id="mReset">
+      <div class="msec-head">
+        <div class="msec-ico" style="background:#A32D2D"><i class="ti ti-trash" style="font-size:18px;color:#fff"></i></div>
+        <div><div class="msec-title" style="color:#f09595">Resetar esta página</div><div class="msec-desc">Apague todos os dados e comece do zero</div></div>
+      </div>
+      <div class="msec-body">
+        <div style="background:rgba(163,45,45,.15);border:1px solid rgba(163,45,45,.4);border-radius:10px;padding:14px 16px;margin-bottom:14px;font-size:13px;color:#f09595;line-height:1.7">
+          <strong>Atenção:</strong> Esta ação apagará permanentemente todos os dados desta página. Ela não pode ser desfeita.
+        </div>
+        <div style="font-size:13px;color:rgba(255,255,255,.6);margin-bottom:10px">Digite <strong style="color:#f09595">RESETAR</strong> para confirmar:</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <input type="text" id="resetPageInput" placeholder="Digite RESETAR" style="max-width:240px;padding:9px 13px;border-radius:8px;border:1px solid rgba(163,45,45,.5);background:rgba(163,45,45,.1);color:#fff;font-family:Inter,sans-serif;font-size:13px;outline:none"/>
+          <button class="mbtn" style="background:#A32D2D;color:#fff" onclick="confirmarResetPagina()"><i class="ti ti-trash"></i> Resetar tudo</button>
+        </div>
+      </div>
+    </div>
+</div>
+
+
+
+<!-- WHATSAPP SUPPORT BUTTON -->
+<div class="wa-btn" id="waBtn">
+  <div class="wa-config-panel" id="waConfigPanel">
+    <div class="wa-config-title"><i class="ti ti-brand-whatsapp" style="color:#25D366;font-size:16px"></i> Configurar suporte WhatsApp</div>
+    <div class="wa-config-hint">Digite o número com código do país + DDD + número, sem espaços.<br><strong>Exemplo:</strong> 5511999999999</div>
+    <input class="wa-config-input" type="tel" id="waNumberInput" placeholder="5511999999999" maxlength="15" oninput="updateWaPreview()"/>
+    <div class="wa-preview" id="waPreview"></div>
+    <button class="wa-save-btn" onclick="saveWaNumber()"><i class="ti ti-device-floppy" style="font-size:13px"></i> Salvar número</button>
+  </div>
+  <div style="position:relative">
+    <div class="wa-tooltip">💬 Falar com suporte</div>
+    <a class="wa-bubble" id="waBubble" href="#" onclick="openWa(event)" rel="noopener">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      <div class="wa-admin-badge" id="waAdminBadge" style="display:none" onclick="toggleWaConfig(event)" title="Configurar WhatsApp">⚙</div>
+    </a>
+  </div>
+</div>
+
+</body>
+</html>
