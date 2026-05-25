@@ -458,58 +458,133 @@ function waPrev(){const n=(document.getElementById('waInp').value||'').replace(/
 function waSave(){const n=(document.getElementById('waInp').value||'').replace(/\D/g,'');if(n.length<10){alert('Número inválido.');return;}localStorage.setItem(WK,n);document.getElementById('waPanel').classList.remove('open');toast('WhatsApp salvo!');}
 function initWa(){if(CU&&CU.role==='admin'){const b=document.getElementById('waAdm');if(b)b.style.display='flex';}document.addEventListener('click',function(e){const p=document.getElementById('waPanel'),btn=document.getElementById('waBtn');if(p&&btn&&!btn.contains(e.target))p.classList.remove('open');});}
 
-// ── AUTH STATE LISTENER (coração do sistema) ──────
+// ── AUTH STATE LISTENER ──────────────────────────
 sb.auth.onAuthStateChange(async (event, session) => {
-  if(event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED'){
+  console.log('[R8] Auth event:', event, session?.user?.id);
+
+  if(event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
     showLoad('Carregando perfil...');
-    let profile = null;
-    try{
-      profile = await loadProfile(session.user.id);
-    }catch(e){
-      console.error('loadProfile error:', e);
+
+    // Timeout de segurança — 10 segundos
+    const timeout = setTimeout(() => {
+      console.error('[R8] Timeout ao carregar perfil');
+      hideLoad();
+      document.getElementById('lErr').textContent = 'Tempo esgotado. Tente novamente.';
+      showScreen('scLogin');
+      sb.auth.signOut();
+    }, 10000);
+
+    try {
+      let profile = null;
+
+      // 1. Tenta RPC
+      try {
+        const rpc = await sb.rpc('get_my_profile');
+        console.log('[R8] RPC result:', rpc.data, rpc.error);
+        if (!rpc.error && rpc.data) {
+          profile = typeof rpc.data === 'string' ? JSON.parse(rpc.data) : rpc.data;
+        }
+      } catch(e) {
+        console.error('[R8] RPC exception:', e);
+      }
+
+      // 2. Fallback: query direta
+      if (!profile) {
+        console.log('[R8] RPC falhou, tentando query direta...');
+        try {
+          const { data, error } = await sb
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          console.log('[R8] Direct query:', data, error);
+          if (!error && data) profile = data;
+        } catch(e) {
+          console.error('[R8] Direct query exception:', e);
+        }
+      }
+
+      clearTimeout(timeout);
+      hideLoad();
+      console.log('[R8] Profile:', profile);
+
+      if (!profile) {
+        // Cria perfil se não existe
+        try {
+          const { data, error } = await sb.from('profiles').upsert({
+            id: session.user.id,
+            full_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
+            username: session.user.email.split('@')[0],
+            role: 'aluno',
+            status: 'pending',
+            color: '#534AB7',
+            planos: {plan:false, proto:false, ment:false}
+          }).select().single();
+          if (!error && data) profile = data;
+        } catch(e) { console.error('[R8] Upsert error:', e); }
+      }
+
+      if (!profile) {
+        toast('Erro ao carregar perfil.', 'ti-alert-circle');
+        await sb.auth.signOut();
+        showScreen('scLogin');
+        return;
+      }
+
+      if (profile.status === 'blocked') {
+        toast('Conta bloqueada.', 'ti-ban');
+        await sb.auth.signOut();
+        showScreen('scLogin');
+        return;
+      }
+
+      if (profile.status === 'pending') {
+        document.getElementById('pName').textContent = (profile.full_name||'') + ' (' + session.user.email + ')';
+        showScreen('scPend');
+        return;
+      }
+
+      enterHub(profile);
+
+    } catch(e) {
+      clearTimeout(timeout);
+      hideLoad();
+      console.error('[R8] Auth flow error:', e);
+      toast('Erro inesperado. Tente novamente.', 'ti-alert-circle');
+      showScreen('scLogin');
     }
-    hideLoad();
-    if(!profile){
-      // Profile not found but user is authenticated - create minimal profile
-      toast('Bem-vindo! Configurando perfil...','ti-settings');
-      // Try to insert profile if missing
-      try{
-        await sb.from('profiles').upsert({
-          id: session.user.id,
-          full_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
-          username: session.user.email.split('@')[0],
-          role: 'aluno',
-          status: 'pending',
-          color: '#534AB7',
-          planos: {plan:false,proto:false,ment:false}
-        });
-        profile = await loadProfile(session.user.id);
-      }catch(e){ console.error('upsert error:', e); }
-    }
-    if(!profile){ toast('Erro ao carregar perfil. Tente novamente.','ti-alert-circle'); await sb.auth.signOut(); showScreen('scLogin'); return; }
-    if(profile.status === 'blocked'){ toast('Conta bloqueada.','ti-ban'); await sb.auth.signOut(); showScreen('scLogin'); return; }
-    if(profile.status === 'pending'){ document.getElementById('pName').textContent=(profile.full_name||'')+' ('+session.user.email+')'; hideLoad(); showScreen('scPend'); return; }
-    enterHub(profile);
   }
-  if(event === 'SIGNED_OUT'){
-    CU=null; showScreen('scLogin');
+
+  if (event === 'SIGNED_OUT') {
+    CU = null;
+    showScreen('scLogin');
   }
-  if(event === 'PASSWORD_RECOVERY'){
+
+  if (event === 'PASSWORD_RECOVERY') {
     const newPass = prompt('Digite sua nova senha (mínimo 6 caracteres):');
-    if(newPass && newPass.length>=6){
-      await sb.auth.updateUser({password:newPass});
-      toast('Senha atualizada com sucesso!','ti-check');
+    if (newPass && newPass.length >= 6) {
+      await sb.auth.updateUser({ password: newPass });
+      toast('Senha atualizada!', 'ti-check');
     }
   }
 });
 
 // ── INIT ──────────────────────────────────────────
-(async()=>{
+(async() => {
   showScreen('scLogin');
-  // Supabase Auth restaura sessão automaticamente via cookie/localStorage
-  // onAuthStateChange dispara com SIGNED_IN se há sessão ativa
-  const { data:{ session } } = await sb.auth.getSession();
-  if(!session) hideLoad();
+  console.log('[R8] Init - checking session...');
+  try {
+    const { data: { session }, error } = await sb.auth.getSession();
+    console.log('[R8] Existing session:', session?.user?.id, error);
+    // onAuthStateChange vai disparar SIGNED_IN automaticamente se sessão existir
+    if (!session) {
+      hideLoad();
+      console.log('[R8] No session - showing login');
+    }
+  } catch(e) {
+    hideLoad();
+    console.error('[R8] Init error:', e);
+  }
 })();
 </script>
 </body>
