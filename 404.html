@@ -344,14 +344,8 @@ function renderMods(){
 
 async function openMod(file){
   if(!CU) return;
-  showLoad('Abrindo módulo...');
-  // Busca sessão JWT atual para passar ao módulo
-  const { data:{ session } } = await sb.auth.getSession();
-  hideLoad();
-  if(!session){ toast('Sessão expirada. Faça login novamente.','ti-alert-circle'); doLogout(); return; }
-  // Passa access_token na URL — módulo usa para autenticar
-  const token = session.access_token;
-  window.location.href = file + '?token=' + token;
+  // Supabase persiste sessão automaticamente — apenas navega
+  window.location.href = file;
 }
 
 // ── ADMIN ─────────────────────────────────────────
