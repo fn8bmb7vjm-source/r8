@@ -512,46 +512,26 @@ async function handleSession(session) {
   showLoad('Carregando perfil...');
   console.log('[R8] Carregando profile para:', session.user.id);
 
-  // Garante que o cliente usa o token do usuário autenticado
-  await sb.auth.setSession({
-    access_token: session.access_token,
-    refresh_token: session.refresh_token
-  });
-
   let profile = null;
 
   try {
-    const { data, error } = await sb
-      .from('profiles')
-      .select('*')
-      .eq('id', session.user.id)
-      .single();
-
-    console.log('[R8] Profile data:', data, '| Error:', error);
-
-    if (!error && data) {
-      profile = data;
-    } else {
-      console.warn('[R8] Profile não encontrado, criando...');
-      const meta = session.user.user_metadata || {};
-      const { data: created, error: upsertErr } = await sb
-        .from('profiles')
-        .upsert({
-          id: session.user.id,
-          full_name: meta.full_name || session.user.email.split('@')[0],
-          username: session.user.email.split('@')[0],
-          role: 'aluno',
-          status: 'pending',
-          color: '#534AB7',
-          planos: {plan:false, proto:false, ment:false}
-        })
-        .select()
-        .single();
-      console.log('[R8] Upsert result:', created, upsertErr);
-      if (created) profile = created;
-    }
+    // Usa fetch direto com o token JWT do usuário — sem depender do cliente sb
+    const resp = await fetch(
+      'https://uofgfvwghbhapimepwng.supabase.co/rest/v1/profiles?id=eq.' + session.user.id + '&select=*',
+      {
+        headers: {
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvZmdmdndnaGJoYXBpbWVwd25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2Njg3ODQsImV4cCI6MjA5NTI0NDc4NH0.RZhrt16AIwIg3PDT3n38q4tSvG6jhoppQb-_-Omw358',
+          'Authorization': 'Bearer ' + session.access_token,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    console.log('[R8] Profile fetch status:', resp.status);
+    const rows = await resp.json();
+    console.log('[R8] Profile rows:', rows);
+    if (rows && rows.length > 0) profile = rows[0];
   } catch(e) {
-    console.error('[R8] Profile load error:', e);
+    console.error('[R8] Profile fetch error:', e);
   }
 
   hideLoad();
