@@ -811,15 +811,17 @@ if(document.getElementById('fieldLabelsForm')){renderFieldLabelsForm();}
   const user = window.R8_USER;
   if(!user){ location.replace('index.html'); return; }
   CURRENT_USER = user;
+  // Compatibilidade: Supabase usa full_name, código usa name
+  if(!CURRENT_USER.name && CURRENT_USER.full_name) CURRENT_USER.name = CURRENT_USER.full_name;
   // Show user badge
   const badge = document.getElementById('hubUserBadge');
   const av = document.getElementById('hubUserAv');
   const nm = document.getElementById('hubUserName');
   if(badge&&av&&nm){
     badge.style.display='flex';
-    av.textContent=(user.name||'?').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
+    av.textContent=((user.full_name||user.name||'?')).split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
     av.style.background=user.color||'#534AB7';
-    nm.textContent=user.name.split(' ')[0];
+    nm.textContent=(user.full_name||user.name||'').split(' ')[0];
   }
   // Load data from Supabase
   try{
