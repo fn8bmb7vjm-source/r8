@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script type="text/javascript" src="/86AAF7CD-A199-463A-BEEF-AEE7400B3F0D/main.js?attr=f-Js6ep--1nIC_7C2TqH9X-FrqvZrnOx3uIC2aE_o5mQG5iAF50K7kgKn-sg187uTSo7gGvvpwvtTPMXHcOThEmrafmRSnz9stqTWhnjTo0VaAzUW9OraGSjfTmrGz5RYH-epkiAS1ESI9yrNzHD41CkXjAZn5ysrXcmubUBQW_lnvMGs5sR2VNPhpe7rjYj5rRG6LMtl71bdBc8ED4G8cQ3T6O0pR-_4Jzxf2-HIou6fy8H2yPlc7dq8ydlvo2murDE7V8jdWzRoyzsF5vpXkaPrhKyghSZwXAZZZaeQufuL0cCfouH5WO-jwscoQ2KUNfRuwxmsH5Oo6gEfAHnYw" charset="UTF-8"></script><script type="text/javascript" src="https://gc.kis.v2.scr.kaspersky-labs.com/FD126C42-EBFA-4E12-B309-BB3FDD723AC1/main.js?attr=_44r4CyOxck7eXcBLhtXTbt7zvWIb9HIwJvd6WIGwQVDKYFkRHZ7o5resofKPKPNRh0heblG0aQvlaxRR4TJ7OxqCCuLTSBRN-Bl-1Y9IIHoXbl_xVXe8xWPT8gCoqS6d-3ZknIUsAHMaHSswwoPy3aI8JDlufna9s178tvke8R2ZfpEZRTausmkQlZfgOLsMGx3NZFlpIQHW0uKQWeRD1CTlvEFZxGT_-F7MHuHm3INJuc8SIxRnGkuO09TBspsCzN-Un7n7pINCerW97kFNNKwrbo6RjONi4Q4hT4cFVJCctPhGEHMRejlM_TnnQoblXg0WdYJi-9a2Xai8cYsww" charset="UTF-8"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 window.R8_MODULE_ID='plan';
 (function(){
@@ -819,9 +819,10 @@ if(document.getElementById('fieldLabelsForm')){renderFieldLabelsForm();}
   const nm = document.getElementById('hubUserName');
   if(badge&&av&&nm){
     badge.style.display='flex';
-    av.textContent=((user.full_name||user.name||'?')).split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
+    const safeName = String(user?.full_name || user?.name || '?');
+    av.textContent=safeName.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
     av.style.background=user.color||'#534AB7';
-    nm.textContent=(user.full_name||user.name||'').split(' ')[0];
+    nm.textContent=safeName.split(' ')[0] || 'Usuário';
   }
   // Load data from Supabase
   try{
