@@ -3,63 +3,103 @@
 <head>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-window.R8_MODULE_ID='plan';
-(function(){
-  var SB_URL='https://uofgfvwghbhapimepwng.supabase.co',SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvZmdmdndnaGJoYXBpbWVwd25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2Njg3ODQsImV4cCI6MjA5NTI0NDc4NH0.RZhrt16AIwIg3PDT3n38q4tSvG6jhoppQb-_-Omw358',SB_KEY='sb-uofgfvwghbhapimepwng-auth-token',MID='plan';
-  async function getToken(){
-    var token=null,userId=null;
-    // Tenta todas as chaves do localStorage que podem ter a sessão
-    for(var i=0;i<localStorage.length;i++){
-      var k=localStorage.key(i);
-      if(!k||(!k.includes('auth-token')&&!k.includes('supabase'))) continue;
-      try{
-        var p=JSON.parse(localStorage.getItem(k)||'null');
-        if(p&&p.access_token){token=p.access_token;userId=p.user&&p.user.id;break;}
-        if(p&&p.currentSession&&p.currentSession.access_token){token=p.currentSession.access_token;userId=p.currentSession.user&&p.currentSession.user.id;break;}
-      }catch(e){}
+(function() {
+  var MID = 'plan';
+  var SB_URL = 'https://uofgfvwghbhapimepwng.supabase.co';
+  var SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvZmdmdndnaGJoYXBpbWVwd25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2Njg3ODQsImV4cCI6MjA5NTI0NDc4NH0.RZhrt16AIwIg3PDT3n38q4tSvG6jhoppQb-_-Omw358';
+  var sb = window.supabase.createClient(SB_URL, SB_ANON);
+
+  async function init() {
+    console.log('[R8-MOD] Módulo:', MID);
+
+    // Pega sessão
+    var session = null;
+    try {
+      var result = await sb.auth.getSession();
+      session = result.data.session;
+      console.log('[R8-MOD] Session:', session ? session.user.id : 'null');
+    } catch(e) {
+      console.error('[R8-MOD] getSession error:', e);
     }
-    if(!token){
-      try{
-        var sb=window.supabase.createClient(SB_URL,SB_ANON);
-        var r=await sb.auth.getSession();
-        if(r.data&&r.data.session){token=r.data.session.access_token;userId=r.data.session.user.id;}
-      }catch(e){}
+
+    if (!session) {
+      console.log('[R8-MOD] Sem sessão — login');
+      location.replace('index.html');
+      return;
     }
-    return {token,userId};
-  }
-  async function init(){
-    var {token,userId}=await getToken();
-    console.log('[R8] mod='+MID+' token='+(token?'ok':'null')+' user='+userId);
-    if(!token||!userId){location.replace('index.html');return;}
-    var profile=null;
-    try{
-      var r=await fetch(SB_URL+'/rest/v1/profiles?id=eq.'+userId+'&select=*',{headers:{'apikey':SB_ANON,'Authorization':'Bearer '+token}});
-      var rows=await r.json();
-      if(rows&&rows.length)profile=rows[0];
-    }catch(e){}
-    if(!profile||profile.status!=='approved'){location.replace('index.html');return;}
-    if(profile.role!=='admin'){
-      var pl=profile.planos||{};
-      if(!pl[MID]){
-        document.body.style='margin:0;background:#0f1d35;min-height:100vh;display:flex;align-items:center;justify-content:center';
-        document.body.innerHTML='<div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:2.5rem;max-width:400px;text-align:center;color:#fff"><div style="font-size:48px;margin-bottom:1rem">⛔</div><div style="font-family:Syne,sans-serif;font-size:20px;font-weight:700;margin-bottom:.75rem">Sem permissão</div><div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:1.5rem">Este módulo não está no seu plano.</div><a href=\"index.html\" style=\"padding:11px 24px;background:#c9a84c;border-radius:10px;color:#0f1d35;font-weight:700;text-decoration:none\">← Voltar ao Hub</a></div>';
+
+    // Busca profile via fetch direto com JWT do usuário
+    var profile = null;
+    try {
+      var resp = await fetch(
+        SB_URL + '/rest/v1/profiles?id=eq.' + session.user.id + '&select=*',
+        {
+          headers: {
+            'apikey': SB_ANON,
+            'Authorization': 'Bearer ' + session.access_token,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      console.log('[R8-MOD] Profile status:', resp.status);
+      var rows = await resp.json();
+      console.log('[R8-MOD] Profile rows:', rows);
+      if (rows && rows.length > 0) profile = rows[0];
+    } catch(e) {
+      console.error('[R8-MOD] Profile error:', e);
+    }
+
+    if (!profile || profile.status !== 'approved') {
+      console.log('[R8-MOD] Perfil inválido:', profile);
+      location.replace('index.html');
+      return;
+    }
+
+    // Verifica permissão
+    if (profile.role !== 'admin') {
+      var pl = profile.planos || {};
+      if (!pl[MID]) {
+        document.body.style = 'margin:0;background:#0f1d35;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:Inter,sans-serif';
+        document.body.innerHTML = '<div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:2.5rem;max-width:400px;text-align:center;color:#fff"><div style="font-size:48px;margin-bottom:1rem">⛔</div><div style="font-family:Syne,sans-serif;font-size:20px;font-weight:700;margin-bottom:.5rem">Sem permissão</div><div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:1.5rem">Este módulo não está no seu plano.</div><a href=\"index.html\" style=\"padding:11px 24px;background:#c9a84c;border-radius:10px;color:#0f1d35;font-weight:700;text-decoration:none;font-size:14px\">← Voltar ao Hub</a></div>';
         return;
       }
     }
-    window.R8_USER=profile;
-    function badge(){
-      var b=document.getElementById('userBadge'),a=document.getElementById('badgeAv'),n=document.getElementById('badgeName');
-      if(b)b.style.display='flex';
-      if(a){var nm=profile.full_name||'?';a.textContent=nm.split(' ').slice(0,2).map(function(w){return w[0]||''}).join('').toUpperCase()||'?';a.style.background=profile.color||'#534AB7';}
-      if(n)n.textContent=(profile.full_name||'').split(' ')[0];
-      if(profile.role==='admin')document.querySelectorAll('[data-admin-only]').forEach(function(el){el.style.display='';});
+
+    // OK
+    window.R8_USER = profile;
+    window.R8_MODULE_ID = MID;
+    window.R8_SB = sb;
+    console.log('[R8-MOD] Auth OK:', profile.full_name, profile.role);
+
+    function applyBadge() {
+      var b = document.getElementById('userBadge');
+      var a = document.getElementById('badgeAv');
+      var n = document.getElementById('badgeName');
+      if (b) b.style.display = 'flex';
+      if (a) {
+        var nm = profile.full_name || '?';
+        a.textContent = nm.split(' ').slice(0,2).map(function(w){return w[0]||''}).join('').toUpperCase()||'?';
+        a.style.background = profile.color || '#534AB7';
+      }
+      if (n) n.textContent = (profile.full_name||'').split(' ')[0];
+      if (profile.role === 'admin') {
+        document.querySelectorAll('[data-admin-only]').forEach(function(el){el.style.display='';});
+      }
     }
-    document.readyState==='loading'?document.addEventListener('DOMContentLoaded',badge):badge();
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', applyBadge);
+    } else {
+      applyBadge();
+    }
   }
-  init().catch(function(){location.replace('index.html');});
+
+  init().catch(function(e) {
+    console.error('[R8-MOD] Fatal:', e);
+    location.replace('index.html');
+  });
 })();
 </script>
-
 
 
 
@@ -799,17 +839,8 @@ if(document.getElementById('fieldLabelsForm')){renderFieldLabelsForm();}
 </div>
 <script>
 (async()=>{
-  // Aguarda auth do R8 (injected no <head>)
-  await new Promise(resolve => {
-    if(window.R8_USER){ resolve(); return; }
-    var t = 0;
-    var iv = setInterval(function(){
-      t += 100;
-      if(window.R8_USER || t > 5000){ clearInterval(iv); resolve(); }
-    }, 100);
-  });
-  const user = window.R8_USER;
-  if(!user){ location.replace('index.html'); return; }
+  const user = await authGuard('plan');
+  if(!user) return;
   CURRENT_USER = user;
   // Show user badge
   const badge = document.getElementById('hubUserBadge');
