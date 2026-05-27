@@ -1,99 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script type="text/javascript" src="/86AAF7CD-A199-463A-BEEF-AEE7400B3F0D/main.js?attr=f-Js6ep--1nIC_7C2TqH9X-FrqvZrnOx3uIC2aE_o5mQG5iAF50K7kgKn-sg187uTSo7gGvvpwvtTPMXHcOThEmrafmRSnz9stqTWhnjTo0VaAzUW9OraGSjfTmrGz5RYH-epkiAS1ESI9yrNzHD41CkXjAZn5ysrXcmubUBQW_lnvMGs5sR2VNPhpe7rjYj5rRG6LMtl71bdBc8ED4G8cQ3T6O0pR-_4Jzxf2-HIou6fy8H2yPlc7dq8ydlvo2murDE7V8jdWzRoyzsF5vpXkaPrhKyghSZwXAZZZaeQufuL0cCfouH5WO-jwscoQ2KUNfRuwxmsH5Oo6gEfAHnYw" charset="UTF-8"></script><script type="text/javascript" src="https://gc.kis.v2.scr.kaspersky-labs.com/FD126C42-EBFA-4E12-B309-BB3FDD723AC1/main.js?attr=_44r4CyOxck7eXcBLhtXTbt7zvWIb9HIwJvd6WIGwQVDKYFkRHZ7o5resofKPKPNRh0heblG0aQvlaxRR4TJ7OxqCCuLTSBRN-Bl-1Y9IIHoXbl_xVXe8xWPT8gCoqS6d-3ZknIUsAHMaHSswwoPy3aI8JDlufna9s178tvke8R2ZfpEZRTausmkQlZfgOLsMGx3NZFlpIQHW0uKQWeRD1CTlvEFZxGT_-F7MHuHm3INJuc8SIxRnGkuO09TBspsCzN-Un7n7pINCerW97kFNNKwrbo6RjONi4Q4hT4cFVJCctPhGEHMRejlM_TnnQoblXg0WdYJi-9a2Xai8cYsww" charset="UTF-8"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script>
-window.R8_MODULE_ID='plan';
-(function(){
-  var SB_URL='https://uofgfvwghbhapimepwng.supabase.co',SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvZmdmdndnaGJoYXBpbWVwd25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2Njg3ODQsImV4cCI6MjA5NTI0NDc4NH0.RZhrt16AIwIg3PDT3n38q4tSvG6jhoppQb-_-Omw358',SB_KEY='sb-uofgfvwghbhapimepwng-auth-token',MID='plan';
-  async function getToken(){
-    var token=null,userId=null;
-    for(var i=0;i<localStorage.length;i++){
-      var k=localStorage.key(i);
-      if(!k||(!k.includes('auth-token')&&!k.includes('supabase'))) continue;
-      try{
-        var p=JSON.parse(localStorage.getItem(k)||'null');
-        if(p&&p.access_token){token=p.access_token;userId=p.user&&p.user.id;break;}
-        if(p&&p.currentSession&&p.currentSession.access_token){token=p.currentSession.access_token;userId=p.currentSession.user&&p.currentSession.user.id;break;}
-      }catch(e){}
-    }
-    if(!token){
-      try{
-        var sb=window.supabase.createClient(SB_URL,SB_ANON);
-        var r=await sb.auth.getSession();
-        if(r.data&&r.data.session){token=r.data.session.access_token;userId=r.data.session.user.id;}
-      }catch(e){}
-    }
-    return {token,userId};
-  }
-  async function init(){
-    var {token,userId}=await getToken();
-    console.log('[R8-MOD] mod='+MID+' token='+(token?'ok':'null')+' user='+userId);
-    if(!token||!userId){location.replace('index.html');return;}
-    var profile=null;
-    try{
-      var r=await fetch(SB_URL+'/rest/v1/profiles?id=eq.'+userId+'&select=*',{headers:{'apikey':SB_ANON,'Authorization':'Bearer '+token}});
-      var rows=await r.json();
-      console.log('[R8-MOD] Profile status:',r.status,'rows:',rows);
-      if(rows&&rows.length)profile=rows[0];
-    }catch(e){}
-    if(!profile||profile.status!=='approved'){location.replace('index.html');return;}
-    if(profile.role!=='admin'){
-      var pl=profile.planos||{};
-      if(!pl[MID]){
-        document.body.style='margin:0;background:#0f1d35;min-height:100vh;display:flex;align-items:center;justify-content:center';
-        document.body.innerHTML='<div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:2.5rem;max-width:400px;text-align:center;color:#fff"><div style="font-size:48px;margin-bottom:1rem">⛔</div><div style="font-family:Syne,sans-serif;font-size:20px;font-weight:700;margin-bottom:.75rem">Sem permissão</div><div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:1.5rem">Este módulo não está no seu plano.</div><a href=\"index.html\" style=\"padding:11px 24px;background:#c9a84c;border-radius:10px;color:#0f1d35;font-weight:700;text-decoration:none\">← Voltar ao Hub</a></div>';
-        return;
-      }
-    }
-    window.R8_USER=profile;
-    console.log('[R8-MOD] Auth OK:',profile.full_name,profile.role);
-    function badge(){
-      var b=document.getElementById('userBadge'),a=document.getElementById('badgeAv'),n=document.getElementById('badgeName');
-      if(b)b.style.display='flex';
-      if(a){var nm=profile.full_name||'?';a.textContent=nm.split(' ').slice(0,2).map(function(w){return w[0]||''}).join('').toUpperCase()||'?';a.style.background=profile.color||'#534AB7';}
-      if(n)n.textContent=(profile.full_name||'').split(' ')[0];
-      if(profile.role==='admin')document.querySelectorAll('[data-admin-only]').forEach(function(el){el.style.display='';});
-    }
-    document.readyState==='loading'?document.addEventListener('DOMContentLoaded',badge):badge();
-  }
-  init().catch(function(){location.replace('index.html');});
-})();
-</script>
-
-
-
-
-
-
-
-<style>
-.hub-back-btn{position:fixed;bottom:1.5rem;left:1.5rem;z-index:1000;display:inline-flex;align-items:center;gap:6px;padding:9px 16px;background:#1a2c4e;color:#fff;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.2);transition:all .2s;text-decoration:none}
-.hub-back-btn:hover{background:#243d6b;transform:translateY(-2px)}
-.hub-user-badge{position:fixed;top:70px;right:1rem;z-index:999;background:#1a2c4e;color:#fff;border-radius:10px;padding:6px 12px;font-size:12px;font-family:'Inter',sans-serif;border:1px solid rgba(255,255,255,.15);display:flex;align-items:center;gap:6px}
-
-/* WHATSAPP SUPPORT BUTTON */
-.wa-btn{position:fixed;bottom:1.5rem;right:1.5rem;z-index:9000;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
-.wa-bubble{background:#25D366;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 16px rgba(37,211,102,.45);transition:all .2s;border:none;text-decoration:none;animation:waPulse 2.5s infinite;position:relative}
-.wa-bubble:hover{transform:scale(1.1);box-shadow:0 6px 24px rgba(37,211,102,.6)}
-.wa-bubble svg{width:28px;height:28px;fill:#fff}
-@keyframes waPulse{0%,100%{box-shadow:0 4px 16px rgba(37,211,102,.45)}50%{box-shadow:0 4px 28px rgba(37,211,102,.75),0 0 0 8px rgba(37,211,102,.1)}}
-.wa-tooltip{background:#fff;color:#0f1d35;font-size:13px;font-weight:600;padding:8px 14px;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.12);white-space:nowrap;display:none;border:1px solid #d8e2f0;position:relative;font-family:'Inter',sans-serif}
-.wa-tooltip::after{content:'';position:absolute;right:16px;bottom:-6px;width:12px;height:12px;background:#fff;border-right:1px solid #d8e2f0;border-bottom:1px solid #d8e2f0;transform:rotate(45deg)}
-.wa-btn:hover .wa-tooltip{display:block}
-.wa-admin-badge{position:absolute;top:-3px;right:-3px;width:18px;height:18px;background:#1a2c4e;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;font-weight:700;border:2px solid #25D366;cursor:pointer;z-index:1}
-.wa-config-panel{display:none;background:#fff;border-radius:14px;padding:1rem;box-shadow:0 8px 32px rgba(0,0,0,.15);border:1px solid #d8e2f0;width:280px;margin-bottom:4px}
-.wa-config-panel.open{display:block}
-.wa-config-title{font-size:13px;font-weight:700;color:#1a2c4e;margin-bottom:8px;display:flex;align-items:center;gap:6px;font-family:'Syne',sans-serif}
-.wa-config-hint{font-size:11px;color:#8a9bb8;margin-bottom:8px;line-height:1.5}
-.wa-config-input{width:100%;padding:8px 11px;border-radius:8px;border:1px solid #c8d4e8;background:#f0f4fa;font-size:13px;font-family:'Inter',sans-serif;color:#0f1d35;outline:none;margin-bottom:6px}
-.wa-config-input:focus{border-color:#25D366}
-.wa-preview{font-size:11px;color:#25D366;font-weight:600;margin-bottom:8px;min-height:16px}
-.wa-save-btn{width:100%;padding:9px;background:#25D366;border:none;border-radius:8px;color:#fff;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
-.wa-save-btn:hover{background:#1ebe5a}
-
-</style>
-
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>R8-Concursos · Planejamento Estratégico</title>
@@ -238,16 +145,6 @@ input:focus,textarea:focus,select:focus{border-color:var(--navy);box-shadow:0 0 
 .modal{background:#fff;border-radius:18px;padding:2rem;width:500px;max-width:95vw;border:1px solid var(--bord)}.modal-t{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--navy);margin-bottom:1.25rem;display:flex;align-items:center;gap:8px}.mac{display:flex;gap:10px;margin-top:1.5rem;justify-content:flex-end}
 /* TOAST */
 .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--navydark);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;z-index:9999;opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none;display:flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.1);max-width:320px}.toast.show{opacity:1;transform:translateY(0)}.toast i{font-size:16px;color:var(--gold);flex-shrink:0}
-
-/* FIELD LABEL EDITOR */
-.field-label-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--bord)}
-.field-label-row:last-child{border-bottom:none}
-.fld-orig{font-size:13px;color:var(--txt3);font-style:italic}
-.fld-input{font-size:13px;padding:7px 11px;border-radius:var(--r);border:1px solid var(--bord2);background:var(--surf2);color:var(--txt);font-family:'Inter',sans-serif;outline:none;width:100%}
-.fld-input:focus{border-color:var(--navy)}
-/* RESET confirm */
-#resetConfirmInput{border:1.5px solid #f09595}
-#resetConfirmInput:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(163,45,45,.1)}
 ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-thumb{background:var(--bord2);border-radius:999px}
 @media(max-width:640px){.g4,.g5{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr}.tb-mid{display:none}.content{padding:1rem}.painel-grid{grid-template-columns:1fr}.crono-row{grid-template-columns:1fr}.crono-d{font-size:32px}}
 </style>
@@ -312,7 +209,6 @@ input:focus,textarea:focus,select:focus{border-color:var(--navy);box-shadow:0 0 
       <a class="np" onclick="goTo('s6')"><i class="ti ti-trophy"></i> Simulados</a>
       <a class="np" onclick="goTo('s7')"><i class="ti ti-chart-line"></i> Gráficos</a>
       <a class="np ap" id="adminNav" style="display:none" onclick="goTo('s8')"><i class="ti ti-shield-check"></i> Admin<span class="ndot" id="adminDot" style="display:none">0</span></a>
-      <a class="np" onclick="goTo('sReset')" style="border-color:rgba(163,45,45,.35);color:rgba(163,45,45,.7)"><i class="ti ti-trash" style="font-size:12px"></i> Resetar</a>
     </div>
     <div class="tb-r">
       <button class="btn btn-go" style="padding:6px 12px;font-size:12px" onclick="exportPDF()"><i class="ti ti-file-type-pdf" style="font-size:14px"></i> Exportar PDF</button>
@@ -324,7 +220,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--navy);box-shadow:0 0 
   <div class="content">
     <!-- PAINEL -->
     <div class="section" id="s0">
-      <div class="shdr"><div class="snum gold"><i class="ti ti-layout-dashboard" style="font-size:14px"></i></div><div><div class="stitle" data-label="Painel Resumo">Painel Resumo</div><div class="sdesc">Visão completa do planejamento em tempo real</div></div></div>
+      <div class="shdr"><div class="snum gold"><i class="ti ti-layout-dashboard" style="font-size:14px"></i></div><div><div class="stitle">Painel Resumo</div><div class="sdesc">Visão completa do planejamento em tempo real</div></div></div>
       <div class="g5" style="margin-bottom:14px">
         <div class="met m-pu"><div class="mv" id="p0_dias">—</div><div class="ml">dias p/ prova</div></div>
         <div class="met m-gr"><div class="mv" id="p0_prog">0%</div><div class="ml">progresso geral</div></div>
@@ -367,7 +263,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--navy);box-shadow:0 0 
     </div>
     <!-- CRONÔMETRO -->
     <div class="section" id="sCrono">
-      <div class="shdr"><div class="snum" style="background:var(--pur)"><i class="ti ti-clock" style="font-size:14px"></i></div><div><div class="stitle" data-label="Cronômetros">Cronômetros</div><div class="sdesc">Ao iniciar qualquer cronômetro, uma notificação de hiperfoco será exibida para maximizar sua concentração</div></div></div>
+      <div class="shdr"><div class="snum" style="background:var(--pur)"><i class="ti ti-clock" style="font-size:14px"></i></div><div><div class="stitle">Cronômetros</div><div class="sdesc">Ao iniciar qualquer cronômetro, uma notificação de hiperfoco será exibida para maximizar sua concentração</div></div></div>
       <div class="crono-card">
         <div class="crono-row">
           <div class="crono-box">
@@ -456,18 +352,18 @@ input:focus,textarea:focus,select:focus{border-color:var(--navy);box-shadow:0 0 
     </div>
     <!-- S4 METAS -->
     <div class="section" id="s4">
-      <div class="shdr"><div class="snum">4</div><div><div class="stitle" data-label="Metas diárias">Metas diárias</div><div class="sdesc">Clique num dia para expandir. Revisões aparecem automaticamente após marcar o item como estudado.</div></div></div>
+      <div class="shdr"><div class="snum">4</div><div><div class="stitle">Metas diárias</div><div class="sdesc">Clique num dia para expandir. Revisões aparecem automaticamente após marcar o item como estudado.</div></div></div>
       <div id="ML"><div class="empty"><i class="ti ti-calendar-off"></i>Preencha o edital e clique em "Gerar metas diárias".</div></div>
     </div>
     <!-- S5 REVISÕES -->
     <div class="section" id="s5">
-      <div class="shdr"><div class="snum">5</div><div><div class="stitle" data-label="Revisão">Cronograma de Revisões</div><div class="sdesc">Revisão automática em 24h, 7 dias e a cada 7 dias até a prova — por item estudado</div></div></div>
+      <div class="shdr"><div class="snum">5</div><div><div class="stitle">Cronograma de Revisões</div><div class="sdesc">Revisão automática em 24h, 7 dias e a cada 7 dias até a prova — por item estudado</div></div></div>
       <div class="card"><div class="ctitle"><i class="ti ti-calendar-check"></i> Calendário de revisões</div><div id="revCal"><div class="empty" style="padding:1.5rem">Estude itens para ver o cronograma.</div></div></div>
       <div class="card"><div class="ctitle"><i class="ti ti-alert-circle"></i> Revisões atrasadas</div><div id="revAtras"><div class="empty" style="padding:1.5rem">Nenhuma revisão atrasada! ✓</div></div></div>
     </div>
     <!-- DIFICULDADES -->
     <div class="section" id="sDif">
-      <div class="shdr"><div class="snum" style="background:var(--red)"><i class="ti ti-alert-triangle" style="font-size:14px"></i></div><div><div class="stitle" data-label="Itens com Dificuldade">Itens com Dificuldade</div><div class="sdesc">Marque os itens que está tendo dificuldade — o sistema agenda sessões extras de reforço automaticamente</div></div></div>
+      <div class="shdr"><div class="snum" style="background:var(--red)"><i class="ti ti-alert-triangle" style="font-size:14px"></i></div><div><div class="stitle">Itens com Dificuldade</div><div class="sdesc">Marque os itens que está tendo dificuldade — o sistema agenda sessões extras de reforço automaticamente</div></div></div>
       <div class="card">
         <div class="ctitle"><i class="ti ti-checkbox"></i> Selecione os itens com dificuldade</div>
         <div style="font-size:13px;color:var(--txt2);margin-bottom:10px">Itens do seu edital — marque os que precisa reforçar:</div>
@@ -478,7 +374,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--navy);box-shadow:0 0 
     </div>
     <!-- S6 SIMULADOS -->
     <div class="section" id="s6">
-      <div class="shdr"><div class="snum">6</div><div><div class="stitle" data-label="Simulados">Simulados</div><div class="sdesc">Calendário automático a cada 15 dias + registro com cronômetro integrado</div></div></div>
+      <div class="shdr"><div class="snum">6</div><div><div class="stitle">Simulados</div><div class="sdesc">Calendário automático a cada 15 dias + registro com cronômetro integrado</div></div></div>
       <div class="card"><div class="ctitle"><i class="ti ti-calendar-event"></i> Simulados programados</div><div id="SP"><div class="empty" style="padding:1.5rem">Defina a data da prova.</div></div></div>
       <div class="card">
         <div class="ctitle"><i class="ti ti-device-floppy"></i> Registrar resultado de simulado</div>
@@ -499,59 +395,17 @@ input:focus,textarea:focus,select:focus{border-color:var(--navy);box-shadow:0 0 
     </div>
     <!-- S7 GRÁFICOS -->
     <div class="section" id="s7">
-      <div class="shdr"><div class="snum">7</div><div><div class="stitle" data-label="Gráficos">Gráficos de desempenho</div><div class="sdesc">Evolução visual de notas e tempo de estudo acumulado</div></div></div>
+      <div class="shdr"><div class="snum">7</div><div><div class="stitle">Gráficos de desempenho</div><div class="sdesc">Evolução visual de notas e tempo de estudo acumulado</div></div></div>
       <div class="card"><div class="ctitle"><i class="ti ti-chart-line"></i> Evolução da nota geral</div><div class="cleg"><span class="cli"><span class="clsq" style="background:#1a2c4e"></span>Nota</span><span class="cli"><span class="clsq" style="background:#1D9E75;height:3px;border-radius:0"></span>Média</span></div><div style="position:relative;width:100%;height:260px"><canvas id="cG" role="img" aria-label="Nota geral">Sem dados.</canvas></div><div id="cGE" class="empty" style="margin-top:12px;padding:1.5rem">Registre pelo menos um simulado.</div></div>
       <div class="card"><div class="ctitle"><i class="ti ti-chart-bar"></i> Nota por disciplina — último vs anterior</div><div class="cleg" id="cDL"></div><div id="cDW" style="position:relative;width:100%;height:280px"><canvas id="cD" role="img" aria-label="Por disciplina">Sem dados.</canvas></div><div id="cDE" class="empty" style="margin-top:12px;padding:1.5rem">Registre simulados com notas por disciplina.</div></div>
       <div class="card"><div class="ctitle"><i class="ti ti-chart-area"></i> Horas de estudo acumuladas</div><div class="cleg"><span class="cli"><span class="clsq" style="background:var(--pur)"></span>Horas/dia</span><span class="cli"><span class="clsq" style="background:var(--gold);height:3px;border-radius:0"></span>Acumulado</span></div><div style="position:relative;width:100%;height:220px"><canvas id="cH" role="img" aria-label="Horas acumuladas">Sem dados.</canvas></div><div id="cHE" class="empty" style="margin-top:12px;padding:1.5rem">Registre sessões de estudo para ver o gráfico.</div></div>
     </div>
-
-    <!-- RESETAR -->
-    <div class="section" id="sReset">
-      <div class="shdr">
-        <div class="snum" style="background:var(--red)"><i class="ti ti-trash" style="font-size:14px"></i></div>
-        <div><div class="stitle">Resetar Planejamento</div><div class="sdesc">Apague todos os dados e comece um novo planejamento do zero</div></div>
-      </div>
-      <div class="card" style="border-color:#f09595">
-        <div class="ctitle" style="color:var(--red)"><i class="ti ti-alert-triangle" style="color:var(--red)"></i> Zona de perigo</div>
-        <div style="font-size:14px;color:var(--txt2);margin-bottom:1.25rem;line-height:1.7">
-          Ao resetar o planejamento, <strong>todos os dados serão apagados permanentemente</strong>: metas diárias, revisões, simulados, histórico de estudo e sessões. Esta ação <strong>não pode ser desfeita</strong>.
-        </div>
-        <div style="background:#fff5f5;border:1px solid #f09595;border-radius:var(--r);padding:14px 16px;margin-bottom:1.25rem">
-          <div style="font-size:13px;color:var(--red);font-weight:600;margin-bottom:8px"><i class="ti ti-info-circle"></i> O que será apagado:</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-            <div style="font-size:13px;color:var(--red);display:flex;align-items:center;gap:5px"><i class="ti ti-x" style="font-size:11px"></i> Concurso e cargo</div>
-            <div style="font-size:13px;color:var(--red);display:flex;align-items:center;gap:5px"><i class="ti ti-x" style="font-size:11px"></i> Disciplinas e itens</div>
-            <div style="font-size:13px;color:var(--red);display:flex;align-items:center;gap:5px"><i class="ti ti-x" style="font-size:11px"></i> Itens do edital</div>
-            <div style="font-size:13px;color:var(--red);display:flex;align-items:center;gap:5px"><i class="ti ti-x" style="font-size:11px"></i> Metas diárias geradas</div>
-            <div style="font-size:13px;color:var(--red);display:flex;align-items:center;gap:5px"><i class="ti ti-x" style="font-size:11px"></i> Histórico de revisões</div>
-            <div style="font-size:13px;color:var(--red);display:flex;align-items:center;gap:5px"><i class="ti ti-x" style="font-size:11px"></i> Todos os simulados</div>
-            <div style="font-size:13px;color:var(--red);display:flex;align-items:center;gap:5px"><i class="ti ti-x" style="font-size:11px"></i> Horas de estudo</div>
-            <div style="font-size:13px;color:var(--red);display:flex;align-items:center;gap:5px"><i class="ti ti-x" style="font-size:11px"></i> Sessões cronometradas</div>
-          </div>
-        </div>
-        <div style="font-size:13px;color:var(--txt2);margin-bottom:12px">Para confirmar, digite <strong>RESETAR</strong> no campo abaixo:</div>
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <input type="text" id="resetConfirmInput" placeholder="Digite RESETAR para confirmar" style="max-width:280px;border-color:#f09595"/>
-          <button class="btn btn-da" onclick="confirmarReset()"><i class="ti ti-trash"></i> Resetar todo o planejamento</button>
-        </div>
-      </div>
-    </div>
-
     <!-- S8 ADMIN -->
     <div class="section" id="s8" style="display:none">
       <div class="shdr"><div class="snum gold"><i class="ti ti-shield-check" style="font-size:14px"></i></div><div><div class="stitle">Painel Administrativo</div><div class="sdesc">Gerencie usuários, aprovações e acessos da plataforma</div></div></div>
       <div id="pendAlert" style="display:none"><div class="alert-b"><i class="ti ti-alert-circle"></i><span id="pendAlertMsg"></span></div></div>
       <div class="card"><div class="ctitle"><i class="ti ti-clock-check"></i> Solicitações pendentes de aprovação</div><div id="adminPend"><div class="empty" style="padding:1.5rem">Nenhuma pendência. ✓</div></div></div>
       <div class="card"><div class="ctitle"><i class="ti ti-users"></i> Todos os usuários</div><div id="adminAll"></div><div class="sep"></div><button class="btn btn-pr" onclick="openNewUser()"><i class="ti ti-user-plus"></i> Adicionar usuário manualmente</button></div>
-      <div class="card">
-        <div class="ctitle"><i class="ti ti-pencil"></i> Personalizar nomes dos campos</div>
-        <div style="font-size:13px;color:var(--txt2);margin-bottom:14px">Edite os rótulos exibidos para os alunos em todo o planejamento. As alterações são salvas e aplicadas imediatamente.</div>
-        <div id="fieldLabelsForm"></div>
-        <div style="display:flex;gap:10px;margin-top:14px">
-          <button class="btn btn-pr" onclick="saveFieldLabels()"><i class="ti ti-device-floppy"></i> Salvar personalizações</button>
-          <button class="btn btn-gh" onclick="resetFieldLabels()"><i class="ti ti-refresh"></i> Restaurar padrão</button>
-        </div>
-      </div>
     </div>
   </div>
 </div>
@@ -576,7 +430,7 @@ let CU=null,CD=null;
 function switchTab(t){document.getElementById('fLogin').style.display=t==='login'?'':'none';document.getElementById('fReg').style.display=t==='register'?'':'none';document.querySelectorAll('.ltab').forEach((b,i)=>b.classList.toggle('on',(i===0&&t==='login')||(i===1&&t==='register')));['lErr','rErr'].forEach(id=>document.getElementById(id).textContent='');}
 function doLogin(){const u=document.getElementById('lUser').value.trim(),p=document.getElementById('lPass').value,err=document.getElementById('lErr');if(!u||!p){err.textContent='Preencha usuário e senha.';return;}const f=getUsers().find(x=>x.username.toLowerCase()===u.toLowerCase()&&x.password===p);if(!f){err.textContent='Usuário ou senha inválidos.';return;}if(f.status==='blocked'){err.textContent='Conta bloqueada. Contate o administrador.';return;}if(f.status==='pending'){document.getElementById('pName').textContent=f.name+' (@'+f.username+')';showScreen('scPend');return;}loginAs(f);}
 function doRegister(){const name=document.getElementById('rName').value.trim(),u=document.getElementById('rUser').value.trim(),p=document.getElementById('rPass').value,err=document.getElementById('rErr');if(!name||!u||!p){err.textContent='Preencha todos os campos.';return;}const users=getUsers();if(users.find(x=>x.username.toLowerCase()===u.toLowerCase())){err.textContent='Usuário já existe.';return;}users.push({username:u,name,password:p,role:'aluno',status:'pending',color:strColor(u),created:new Date().toISOString()});saveUsers(users);document.getElementById('pName').textContent=name+' (@'+u+')';showScreen('scPend');showToast('Solicitação enviada!');}
-function loginAs(user){CU=user;CD=getUserData(user.username)||defaultData();const av=document.getElementById('topAv');av.textContent=initials(user.name);av.style.background=user.color||strColor(user.username);av.style.color='#fff';document.getElementById('topNm').textContent=user.name.split(' ')[0];document.getElementById('adminNav').style.display=user.role==='admin'?'':'none';if(user.role==='admin')renderFieldLabelsForm();document.getElementById('s8').style.display=user.role==='admin'?'':'none';showScreen('scApp');loadUserData();if(user.role==='admin')renderAdmin();showToast('Bem-vindo(a), '+user.name.split(' ')[0]+'!');updateAdminDot();}
+function loginAs(user){CU=user;CD=getUserData(user.username)||defaultData();const av=document.getElementById('topAv');av.textContent=initials(user.name);av.style.background=user.color||strColor(user.username);av.style.color='#fff';document.getElementById('topNm').textContent=user.name.split(' ')[0];document.getElementById('adminNav').style.display=user.role==='admin'?'':'none';document.getElementById('s8').style.display=user.role==='admin'?'':'none';showScreen('scApp');loadUserData();if(user.role==='admin')renderAdmin();showToast('Bem-vindo(a), '+user.name.split(' ')[0]+'!');updateAdminDot();}
 function doLogout(){estStop(true);simStop(true);if(CU)saveCurrentData();CU=null;CD=null;document.getElementById('lUser').value='';document.getElementById('lPass').value='';switchTab('login');renderChips();showScreen('scLogin');}
 function renderChips(){const list=document.getElementById('chipList'),users=getUsers();if(!users.length){list.innerHTML='<p style="font-size:12px;color:rgba(255,255,255,.3)">Nenhum usuário ainda.</p>';return;}list.innerHTML='';users.forEach(u=>{const col=u.color||strColor(u.username),sc=u.status==='approved'?'st-ok':u.status==='pending'?'st-pe':'st-bl',st=u.status==='approved'?'Aprovado':u.status==='pending'?'Pendente':'Bloqueado';const d=document.createElement('div');d.className='uchip';d.onclick=()=>{document.getElementById('lUser').value=u.username;switchTab('login');document.getElementById('lPass').focus()};d.innerHTML=`<div class="uav" style="background:${col};color:#fff">${initials(u.name)}</div><div><div class="uchip-n">${u.name}</div><div style="font-size:11px;color:rgba(255,255,255,.3)">@${u.username}</div></div><span class="ust ${sc}">${st}</span>`;list.appendChild(d);});}
 let resetTarget=null;
@@ -676,304 +530,6 @@ function showToast(msg){const t=document.getElementById('toast');document.getEle
 renderChips();
 document.getElementById('cGE').style.display='block';document.getElementById('cDE').style.display='block';document.getElementById('cHE').style.display='block';
 setInterval(()=>{if(CU)saveCurrentData();},30000);
-
-// ═══ FIELD LABELS SYSTEM ═══
-const DEFAULT_LABELS = {
-  'Concurso': 'Concurso',
-  'Cargo': 'Cargo',
-  'Data da prova': 'Data da prova',
-  'Disciplinas': 'Disciplinas',
-  'Qtd. itens': 'Qtd. itens',
-  'Conteúdo programático': 'Conteúdo programático',
-  'Metas diárias': 'Metas diárias',
-  'Revisão': 'Revisão',
-  'Simulados': 'Simulados',
-  'Nota geral': 'Nota geral',
-  'Nota por disciplina': 'Nota por disciplina',
-  'Horas estudadas': 'Horas estudadas',
-  'Progresso geral': 'Progresso geral',
-  'Painel Resumo': 'Painel Resumo',
-  'Cronômetro de Estudo': 'Cronômetro de Estudo',
-  'Cronômetro de Simulado': 'Cronômetro de Simulado',
-  'Itens com Dificuldade': 'Itens com Dificuldade',
-  'Sessões de reforço': 'Sessões de reforço',
-  'Gráficos': 'Gráficos'
-};
-const LABELS_KEY = 'r8_field_labels';
-function getLabels(){
-  try{const s=localStorage.getItem(LABELS_KEY);return s?JSON.parse(s):{...DEFAULT_LABELS};}catch(e){return{...DEFAULT_LABELS};}
-}
-function saveLabelsLocal(labels){localStorage.setItem(LABELS_KEY,JSON.stringify(labels));}
-function applyLabels(){
-  const labels=getLabels();
-  // Apply to all elements with data-label attribute
-  document.querySelectorAll('[data-label]').forEach(el=>{
-    const key=el.getAttribute('data-label');
-    if(labels[key])el.textContent=labels[key];
-  });
-}
-function renderFieldLabelsForm(){
-  const labels=getLabels();
-  const el=document.getElementById('fieldLabelsForm');
-  if(!el)return;
-  el.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--bord)"><div class="lb">Campo original</div><div class="lb">Nome personalizado</div></div>';
-  Object.keys(DEFAULT_LABELS).forEach(key=>{
-    const row=document.createElement('div');row.className='field-label-row';
-    const cur=labels[key]||DEFAULT_LABELS[key];
-    row.innerHTML=`<div class="fld-orig">${key}</div><input class="fld-input" data-field-key="${key}" value="${cur}" placeholder="${DEFAULT_LABELS[key]}"/>`;
-    el.appendChild(row);
-  });
-}
-function saveFieldLabels(){
-  const labels={};
-  document.querySelectorAll('[data-field-key]').forEach(inp=>{
-    const key=inp.getAttribute('data-field-key');
-    labels[key]=inp.value.trim()||DEFAULT_LABELS[key];
-  });
-  saveLabelsLocal(labels);
-  applyLabels();
-  showToast('Personalizações salvas!');
-}
-function resetFieldLabels(){
-  if(!confirm('Restaurar todos os nomes para o padrão?'))return;
-  localStorage.removeItem(LABELS_KEY);
-  renderFieldLabelsForm();
-  applyLabels();
-  showToast('Nomes restaurados ao padrão!');
-}
-
-// ═══ RESET PLANEJAMENTO ═══
-function confirmarReset(){
-  const input=document.getElementById('resetConfirmInput');
-  if(!input||input.value.trim().toUpperCase()!=='RESETAR'){
-    input.style.borderColor='var(--red)';
-    input.style.animation='shake .3s ease';
-    setTimeout(()=>input.style.animation='',400);
-    showToast('Digite RESETAR para confirmar!',false);
-    return;
-  }
-  if(!confirm('ATENÇÃO: Esta ação é irreversível!\n\nTodos os dados do seu planejamento serão apagados permanentemente.\n\nDeseja continuar?'))return;
-  // Clear all planning data
-  if(window.CU && window.CD){
-    window.CD = defaultData();
-    saveCurrentData();
-  } else {
-    // localStorage fallback
-    const keys=[];
-    for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('r8v4_data_'))keys.push(k);}
-    keys.forEach(k=>localStorage.removeItem(k));
-  }
-  // Reset UI
-  discs=defaultData().discs;dCnt=4;allDays=[];openDay={};sims=[];openSim=null;
-  sessoes=[];totalEstudoSeg=0;simSessoes=[];dificuldades=[];reforcos=[];
-  document.getElementById('iConc').value='';
-  document.getElementById('iCargo').value='';
-  document.getElementById('iProva').value='';
-  document.getElementById('eArea').value='';
-  document.getElementById('resetConfirmInput').value='';
-  onDataChange();renderDL();renderSP();renderSDF();renderML();renderSH();renderSRes();
-  buildCharts();updateProg();renderRevisions();renderPainel();renderCronoHist();renderDificuldades();renderReforcos();
-  document.getElementById('cGE').style.display='block';
-  document.getElementById('cDE').style.display='block';
-  document.getElementById('cHE').style.display='block';
-  showToast('Planejamento resetado! Pronto para um novo plano.');
-  // Scroll to top
-  setTimeout(()=>document.getElementById('s0').scrollIntoView({behavior:'smooth',block:'start'}),500);
-}
-
-// Shake animation for reset
-const shakeStyle=document.createElement('style');
-shakeStyle.textContent='@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}';
-document.head.appendChild(shakeStyle);
-
-// On load
-applyLabels();
-if(document.getElementById('fieldLabelsForm')){renderFieldLabelsForm();}
 </script>
-
-<a class="hub-back-btn" href="index.html">
-  <i class="ti ti-arrow-left"></i> Hub R8
-</a>
-<div class="hub-user-badge" id="hubUserBadge" style="display:none">
-  <div id="hubUserAv" style="width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:9px;font-weight:700"></div>
-  <span id="hubUserName"></span>
-</div>
-<script>
-(async()=>{
-  // Aguarda R8_USER do auth injetado no head
-  await new Promise(resolve => {
-    if(window.R8_USER){ resolve(); return; }
-    var waited=0, iv=setInterval(function(){
-      waited+=50;
-      if(window.R8_USER||waited>8000){ clearInterval(iv); resolve(); }
-    },50);
-  });
-  const user = window.R8_USER;
-  if(!user){ location.replace('index.html'); return; }
-  CURRENT_USER = user;
-  // Compatibilidade: Supabase usa full_name, código usa name
-  if(!CURRENT_USER.name && CURRENT_USER.full_name) CURRENT_USER.name = CURRENT_USER.full_name;
-  // Show user badge
-  const badge = document.getElementById('hubUserBadge');
-  const av = document.getElementById('hubUserAv');
-  const nm = document.getElementById('hubUserName');
-  if(badge&&av&&nm){
-    badge.style.display='flex';
-    const safeName = String(user?.full_name || user?.name || '?');
-    av.textContent=safeName.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
-    av.style.background=user.color||'#534AB7';
-    nm.textContent=safeName.split(' ')[0] || 'Usuário';
-  }
-
-async function loadFromSupabase(userId){
-  try{
-    if(!userId){
-      console.warn('loadFromSupabase: userId ausente');
-      return null;
-    }
-
-    if(window.supabase && typeof window.supabase.createClient === 'function'){
-      const sb = window.supabase.createClient(SB_URL, SB_ANON);
-
-      const { data, error } = await sb
-        .from('planejamento')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if(error){
-        console.warn('Erro ao carregar Supabase:', error.message);
-        return null;
-      }
-
-      return data || null;
-    }
-
-    console.warn('Supabase client indisponível');
-    return null;
-
-  }catch(e){
-    console.warn('Fallback loadFromSupabase executado', e);
-    return null;
-  }
-}
-
-
-  // Load data from Supabase
-  try{
-    const sbData = await loadFromSupabase(user.id);
-    if(sbData && typeof loadUserData === 'function'){
-      window.CD = {
-        concurso: sbData.concurso||'',
-        cargo: sbData.cargo||'',
-        dataProva: sbData.data_prova||'',
-        edital: sbData.edital||'',
-        discs: sbData.discs||[{id:1,nome:'Língua Portuguesa',itens:80},{id:2,nome:'Matemática',itens:60},{id:3,nome:'Direito Constitucional',itens:50}],
-        discCounter: sbData.disc_counter||4,
-        allDays: sbData.all_days||[],
-        openDay: sbData.open_day||{},
-        sims: sbData.sims||[],
-        openSim: sbData.open_sim||null,
-        sessoes: sbData.sessoes||[],
-        totalEstudoSeg: sbData.total_estudo_seg||0,
-        simSessoes: sbData.sim_sessoes||[],
-        dificuldades: sbData.dificuldades||[],
-        reforcos: sbData.reforcos||[]
-      };
-      window.CU = user;
-      loadUserData();
-    }
-  }catch(e){ console.log('Load error',e); }
-  // Auto-save to Supabase every 30s
-  setInterval(async()=>{
-    if(CURRENT_USER && window.CD){
-      try{ await saveToSupabase(CURRENT_USER.id, window.CD); }catch(e){}
-    }
-  }, 30000);
-  // Override saveCurrentData to also save to Supabase
-  const origSave = window.saveCurrentData;
-  if(origSave){
-    window.saveCurrentData = async function(){
-      origSave();
-      if(CURRENT_USER && window.CD){
-        try{ await saveToSupabase(CURRENT_USER.id, window.CD); }catch(e){}
-      }
-    };
-  }
-})();
-
-// ═══ WHATSAPP SUPPORT ═══
-const WA_KEY='r8_wa_number';
-function getWaNumber(){return localStorage.getItem(WA_KEY)||'5511999999999';}
-function openWa(e){
-  e.preventDefault();e.stopPropagation();
-  const num=getWaNumber();
-  if(!num||num==='5511999999999'){
-    if(window.CU&&window.CU.role==='admin'){toggleWaConfig(e);}
-    else{alert('Suporte via WhatsApp não configurado. Contate o administrador.');}
-    return;
-  }
-  const msg=encodeURIComponent('Olá! Preciso de suporte com a plataforma R8-Concursos.');
-  window.open('https://wa.me/'+num+'?text='+msg,'_blank');
-}
-function toggleWaConfig(e){
-  if(e){e.preventDefault();e.stopPropagation();}
-  const panel=document.getElementById('waConfigPanel');
-  if(!panel)return;
-  panel.classList.toggle('open');
-  if(panel.classList.contains('open')){
-    const inp=document.getElementById('waNumberInput');
-    if(inp){inp.value=getWaNumber();updateWaPreview();}
-  }
-}
-function updateWaPreview(){
-  const inp=document.getElementById('waNumberInput');
-  const prev=document.getElementById('waPreview');
-  if(!inp||!prev)return;
-  const num=inp.value.replace(/\D/g,'');
-  prev.textContent=num.length>=10?'✓ wa.me/'+num:'';
-}
-function saveWaNumber(){
-  const inp=document.getElementById('waNumberInput');
-  if(!inp)return;
-  const num=inp.value.replace(/\D/g,'');
-  if(num.length<10){alert('Número inválido. Use: 5511999999999');return;}
-  localStorage.setItem(WA_KEY,num);
-  document.getElementById('waConfigPanel').classList.remove('open');
-  showToast('WhatsApp de suporte salvo!');
-}
-function initWaButton(){
-  if(window.CU&&window.CU.role==='admin'){
-    const b=document.getElementById('waAdminBadge');if(b)b.style.display='flex';
-  }
-  document.addEventListener('click',function(e){
-    const panel=document.getElementById('waConfigPanel');
-    const btn=document.getElementById('waBtn');
-    if(panel&&btn&&!btn.contains(e.target))panel.classList.remove('open');
-  });
-}
-document.addEventListener('keydown',function(e){if(e.key==='Escape'){const p=document.getElementById('waConfigPanel');if(p)p.classList.remove('open');}});
-
-</script>
-
-
-<!-- WHATSAPP SUPPORT BUTTON -->
-<div class="wa-btn" id="waBtn">
-  <div class="wa-config-panel" id="waConfigPanel">
-    <div class="wa-config-title"><i class="ti ti-brand-whatsapp" style="color:#25D366;font-size:16px"></i> Configurar suporte WhatsApp</div>
-    <div class="wa-config-hint">Digite o número com código do país + DDD + número, sem espaços.<br><strong>Exemplo:</strong> 5511999999999</div>
-    <input class="wa-config-input" type="tel" id="waNumberInput" placeholder="5511999999999" maxlength="15" oninput="updateWaPreview()"/>
-    <div class="wa-preview" id="waPreview"></div>
-    <button class="wa-save-btn" onclick="saveWaNumber()"><i class="ti ti-device-floppy" style="font-size:13px"></i> Salvar número</button>
-  </div>
-  <div style="position:relative">
-    <div class="wa-tooltip">💬 Falar com suporte</div>
-    <a class="wa-bubble" id="waBubble" href="#" onclick="openWa(event)" rel="noopener">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-      <div class="wa-admin-badge" id="waAdminBadge" style="display:none" onclick="toggleWaConfig(event)" title="Configurar WhatsApp">⚙</div>
-    </a>
-  </div>
-</div>
-
 </body>
 </html>
