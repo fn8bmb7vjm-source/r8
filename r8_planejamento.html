@@ -824,6 +824,41 @@ if(document.getElementById('fieldLabelsForm')){renderFieldLabelsForm();}
     av.style.background=user.color||'#534AB7';
     nm.textContent=safeName.split(' ')[0] || 'Usuário';
   }
+
+async function loadFromSupabase(userId){
+  try{
+    if(!userId){
+      console.warn('loadFromSupabase: userId ausente');
+      return null;
+    }
+
+    if(window.supabase && typeof window.supabase.createClient === 'function'){
+      const sb = window.supabase.createClient(SB_URL, SB_ANON);
+
+      const { data, error } = await sb
+        .from('planejamento')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if(error){
+        console.warn('Erro ao carregar Supabase:', error.message);
+        return null;
+      }
+
+      return data || null;
+    }
+
+    console.warn('Supabase client indisponível');
+    return null;
+
+  }catch(e){
+    console.warn('Fallback loadFromSupabase executado', e);
+    return null;
+  }
+}
+
+
   // Load data from Supabase
   try{
     const sbData = await loadFromSupabase(user.id);
